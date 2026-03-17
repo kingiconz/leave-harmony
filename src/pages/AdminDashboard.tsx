@@ -649,8 +649,8 @@ export default function AdminDashboard() {
               <div className="space-y-6">
                 {/* Controls */}
                 <div className="flex flex-wrap items-center gap-3">
-                  <Select value={selectedYear} onValueChange={(v) => { setSelectedYear(v); setSelectedMonth("all"); }}>
-                    <SelectTrigger className="w-[120px]">
+                  <Select value={selectedYear} onValueChange={(v) => { setSelectedYear(v); setSelectedMonth("all"); setAnalyticsView("yearly"); }}>
+                    <SelectTrigger className="w-[100px]">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -660,27 +660,19 @@ export default function AdminDashboard() {
                     </SelectContent>
                   </Select>
 
-                  <div className="flex flex-wrap gap-1">
-                    <Button
-                      size="sm"
-                      variant={selectedMonth === "all" ? "default" : "outline"}
-                      onClick={() => setSelectedMonth("all")}
-                      className="text-xs"
-                    >
-                      All Months
-                    </Button>
-                    {MONTH_NAMES.map((name, i) => (
-                      <Button
-                        key={i}
-                        size="sm"
-                        variant={selectedMonth === String(i) ? "default" : "outline"}
-                        onClick={() => setSelectedMonth(String(i))}
-                        className="text-xs px-2"
-                      >
-                        {name}
-                      </Button>
-                    ))}
+                  <div className="flex gap-1">
+                    <Button size="sm" variant={analyticsView === "yearly" ? "default" : "outline"} onClick={() => { setAnalyticsView("yearly"); setSelectedMonth("all"); }} className="text-xs">Yearly</Button>
+                    <Button size="sm" variant={analyticsView === "weekly" ? "default" : "outline"} onClick={() => { setAnalyticsView("weekly"); setSelectedMonth("all"); }} className="text-xs">Weekly</Button>
                   </div>
+
+                  {analyticsView === "yearly" && (
+                    <div className="flex flex-wrap gap-1">
+                      <Button size="sm" variant={selectedMonth === "all" ? "default" : "outline"} onClick={() => setSelectedMonth("all")} className="text-xs">All</Button>
+                      {MONTH_NAMES.map((name, i) => (
+                        <Button key={i} size="sm" variant={selectedMonth === String(i) ? "default" : "outline"} onClick={() => { setSelectedMonth(String(i)); setAnalyticsView("yearly"); }} className="text-xs px-2">{name}</Button>
+                      ))}
+                    </div>
+                  )
 
                   <span className="ml-auto text-xs text-muted-foreground flex items-center gap-1">
                     <span className="h-2 w-2 rounded-full bg-success animate-pulse" />
