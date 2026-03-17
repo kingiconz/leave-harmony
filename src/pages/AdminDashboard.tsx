@@ -672,7 +672,7 @@ export default function AdminDashboard() {
                         <Button key={i} size="sm" variant={selectedMonth === String(i) ? "default" : "outline"} onClick={() => { setSelectedMonth(String(i)); setAnalyticsView("yearly"); }} className="text-xs px-2">{name}</Button>
                       ))}
                     </div>
-                  )
+                  )}
 
                   <span className="ml-auto text-xs text-muted-foreground flex items-center gap-1">
                     <span className="h-2 w-2 rounded-full bg-success animate-pulse" />
