@@ -24,7 +24,7 @@ export default function Navbar() {
     <nav className="border-b border-border bg-card">
       <div className="flex items-center justify-between px-4 py-3 sm:px-6 sm:py-4">
         <div className="flex items-center gap-2">
-          <img src="/favicon.ico" alt="logo" className="h-10 w-10 sm:h-14 sm:w-14" />
+          <img src="https://e-crimebureau.com/wp-content/uploads/2025/10/cropped-APPROVED-NEW-LOGO.png" alt="logo" className="h-10 w-10 sm:h-14 sm:w-14" />
           <span className="font-montserrat text-xl sm:text-2xl font-bold text-primary">LeaveTrack</span>
         </div>
 

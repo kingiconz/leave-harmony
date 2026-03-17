@@ -1,107 +1,188 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { CalendarDays, Workflow, BarChart3 } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+
+const PARTICLE_COUNT = 40;
 
 const Index = () => {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [mouse, setMouse] = useState({ x: 0, y: 0 });
+
+  // MOUSE TRACKING
+  useEffect(() => {
+    const handleMove = (e: MouseEvent) => {
+      setMouse({
+        x: e.clientX,
+        y: e.clientY,
+      });
+    };
+
+    window.addEventListener("mousemove", handleMove);
+    return () => window.removeEventListener("mousemove", handleMove);
+  }, []);
+
+  // PARTICLE NETWORK (CANVAS)
+  useEffect(() => {
+    const canvas = canvasRef.current!;
+    const ctx = canvas.getContext("2d")!;
+    let particles: any[] = [];
+
+    const resize = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+
+    resize();
+    window.addEventListener("resize", resize);
+
+    // INIT PARTICLES
+    particles = Array.from({ length: PARTICLE_COUNT }).map(() => ({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height,
+      vx: (Math.random() - 0.5) * 0.7,
+      vy: (Math.random() - 0.5) * 0.7,
+    }));
+
+    const draw = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      particles.forEach((p, i) => {
+        p.x += p.vx;
+        p.y += p.vy;
+
+        // bounce
+        if (p.x < 0 || p.x > canvas.width) p.vx *= -1;
+        if (p.y < 0 || p.y > canvas.height) p.vy *= -1;
+
+        // draw particle
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 2, 0, Math.PI * 2);
+        ctx.fillStyle = "rgba(255,255,255,0.8)";
+        ctx.fill();
+
+        // connect lines
+        particles.forEach((p2) => {
+          const dist = Math.hypot(p.x - p2.x, p.y - p2.y);
+          if (dist < 120) {
+            ctx.beginPath();
+            ctx.moveTo(p.x, p.y);
+            ctx.lineTo(p2.x, p2.y);
+            ctx.strokeStyle = `rgba(255,255,255,${1 - dist / 120})`;
+            ctx.stroke();
+          }
+        });
+      });
+
+      requestAnimationFrame(draw);
+    };
+
+    draw();
+
+    return () => window.removeEventListener("resize", resize);
+  }, []);
+
   return (
-    <div className="min-h-screen w-full bg-gradient-to-b from-primary/5 to-background flex flex-col">
+    <div className="relative min-h-screen w-full overflow-hidden font-montserrat animate-[fadeIn_1.2s_ease]">
 
-      {/* NAVBAR */}
-      <nav className="h-14 sm:h-16 border-b bg-card/80 backdrop-blur flex items-center shrink-0">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 w-full flex items-center justify-between">
-          <div className="flex items-center gap-2 sm:gap-3">
-            <img src="/favicon.ico" className="h-10 w-10 sm:h-14 sm:w-14" />
-            <span className="font-montserrat text-lg sm:text-2xl font-bold text-primary">
-              LeaveTrack
-            </span>
+      {/* INLINE CSS */}
+      <style>
+        {`
+          @keyframes fadeIn {
+            from { opacity: 0; transform: scale(1.05); }
+            to { opacity: 1; transform: scale(1); }
+          }
+
+          .wave {
+            position: absolute;
+            width: 200%;
+            height: 200px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 50%;
+            animation: waveMove 12s linear infinite;
+          }
+
+          @keyframes waveMove {
+            from { transform: translateX(0); }
+            to { transform: translateX(-50%); }
+          }
+
+          .ripple {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.3);
+            transform: scale(0);
+            animation: rippleAnim 0.6s linear;
+            pointer-events: none;
+          }
+
+          @keyframes rippleAnim {
+            to {
+              transform: scale(6);
+              opacity: 0;
+            }
+          }
+        `}
+      </style>
+
+      {/* BACKGROUND */}
+      <img
+        src="https://i.ibb.co/mVrnptN1/globe.jpg"
+        className="absolute inset-0 w-full h-full object-cover scale-104"
+      />
+
+      <div className="absolute inset-0 bg-black/70" />
+
+      {/* WAVES */}
+      <div className="wave bottom-0 left-0" />
+      <div className="wave bottom-10 left-0 opacity-50" />
+
+      {/* PARTICLE CANVAS */}
+      <canvas
+        ref={canvasRef}
+        className="absolute inset-0 z-0"
+      />
+
+      {/* CONTENT */}
+      <div className="relative z-10 flex flex-col min-h-screen">
+
+        {/* NAV */}
+        <nav className="flex justify-between px-6 py-5 text-white">
+          <div className="flex items-center gap-3">
+            <img src="https://e-crimebureau.com/wp-content/uploads/2025/10/cropped-APPROVED-NEW-LOGO.png" alt="logo" className="w-16 h-16" />
+            <span className="font-montserrat text-2xl font-bold text-white">LeaveTrack</span>
           </div>
-          <Button asChild size="sm">
-            <Link to="/staff/login">Staff Login</Link>
-          </Button>
-        </div>
-      </nav>
+          <div></div>
+        </nav>
 
-      {/* MAIN CONTENT */}
-      <main className="flex-1 flex items-center justify-center px-4 sm:px-6 py-8 sm:py-0">
+        {/* MAIN */}
+        <main className="flex-1 flex items-center justify-center px-6">
 
-        {/* Mobile: phone-style card layout */}
-        <div className="w-full max-w-sm sm:hidden flex flex-col items-center text-center">
-          <div className="w-full rounded-3xl border border-border bg-card shadow-2xl overflow-hidden mb-8">
-            <img
-              src="https://images.unsplash.com/photo-1551288049-bebda4e38f71"
-              alt="HR analytics dashboard"
-              className="w-full h-48 object-cover"
-            />
-            <div className="p-6 space-y-4">
-              <h1 className="text-2xl font-bold text-primary font-montserrat leading-tight">
-                Leave<br />Management
-              </h1>
-              <p className="text-sm text-muted-foreground font-montserrat">
-                A centralized platform for submitting, reviewing, and managing employee leave requests while maintaining clear visibility of workforce availability.
-              </p>
-              <Button asChild className="w-full rounded-full" size="lg">
-                <Link to="/staff/login">Get Started</Link>
-              </Button>
-            </div>
-          </div>
+          <div className="backdrop-blur-xl bg-white/10 border border-white/20 
+                          rounded-3xl p-8 text-center shadow-2xl max-w-md w-full">
 
-          <div className="flex flex-col gap-3 w-full font-montserrat text-sm">
-            <div className="flex items-center gap-3 text-muted-foreground">
-              <CalendarDays className="text-primary flex-shrink-0 h-5 w-5" />
-              Leave Calendar
-            </div>
-            <div className="flex items-center gap-3 text-muted-foreground">
-              <Workflow className="text-primary flex-shrink-0 h-5 w-5" />
-              Approval Flow
-            </div>
-            <div className="flex items-center gap-3 text-muted-foreground">
-              <BarChart3 className="text-primary flex-shrink-0 h-5 w-5" />
-              HR Insights
-            </div>
-          </div>
-        </div>
-
-        {/* Desktop: two-column layout */}
-        <div className="hidden sm:grid max-w-7xl mx-auto lg:grid-cols-2 gap-8 lg:gap-12 items-center w-full">
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-primary leading-tight mb-6 font-montserrat">
-              Leave<br />Management System
+            <h1 className="text-4xl font-bold text-white mb-4">
+              Leave Management
             </h1>
-            <p className="text-lg text-muted-foreground mb-8 max-w-lg font-montserrat">
-              A centralized platform for submitting, reviewing, and managing employee leave requests while maintaining clear visibility of workforce availability.
-            </p>
-            <Button asChild size="lg">
-              <Link to="/staff/login">Request Leave</Link>
-            </Button>
-            <div className="flex flex-col gap-4 sm:flex-row sm:gap-6 mt-10 font-montserrat">
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <CalendarDays className="text-primary flex-shrink-0" />
-                Leave Calendar
-              </div>
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <Workflow className="text-primary flex-shrink-0" />
-                Approval Flow
-              </div>
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <BarChart3 className="text-primary flex-shrink-0" />
-                HR Insights
-              </div>
-            </div>
-          </div>
-          <div className="rounded-2xl border shadow-xl overflow-hidden hover:scale-105 hover:shadow-2xl transition-all duration-300 cursor-pointer">
-            <img
-              src="https://images.unsplash.com/photo-1551288049-bebda4e38f71"
-              alt="HR analytics dashboard"
-              className="w-full object-cover"
-            />
-          </div>
-        </div>
-      </main>
 
-      {/* FOOTER */}
-      <footer className="h-12 border-t flex items-center justify-center px-4 sm:px-6 text-sm text-muted-foreground font-montserrat shrink-0">
-        © {new Date().getFullYear()} LeaveTrack
-      </footer>
+            <p className="text-white/70 mb-8 text-sm">
+              Automate leave workflows and gain real-time workforce visibility.
+            </p>
+
+            <Button
+              asChild
+              className="w-full rounded-full h-12 bg-white text-black hover:bg-white/90"
+            >
+              <Link to="/staff/login">Get started</Link>
+            </Button>
+
+          </div>
+
+        </main>
+
+        <footer className="text-center text-white/40 text-sm pb-4">
+          © {new Date().getFullYear()} LeaveTrack
+        </footer>
+      </div>
     </div>
   );
 };

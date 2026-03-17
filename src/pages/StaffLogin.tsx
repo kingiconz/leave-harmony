@@ -56,7 +56,7 @@ export default function StaffLogin() {
               Back
             </Button>
           </div>
-          <img src="/favicon.ico" alt="logo" className="mx-auto mb-4 h-24 w-24" />
+          <img src="https://e-crimebureau.com/wp-content/uploads/2025/10/cropped-APPROVED-NEW-LOGO.png" alt="logo" className="mx-auto mb-4 h-24 w-24" />
           <CardDescription>
             {isRegister ? "Register a new staff account" : "Sign in to manage your leave requests"}
           </CardDescription>
