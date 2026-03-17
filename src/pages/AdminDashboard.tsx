@@ -16,12 +16,15 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 
 const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
+type AnalyticsView = "yearly" | "weekly" | "monthly";
+
 export default function AdminDashboard() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const currentYear = new Date().getFullYear();
   const [selectedYear, setSelectedYear] = useState(String(currentYear));
   const [selectedMonth, setSelectedMonth] = useState("all");
+  const [analyticsView, setAnalyticsView] = useState<AnalyticsView>("yearly");
 
   const { data: requests, isLoading } = useQuery({
     queryKey: ["all-leaves"],
@@ -166,9 +169,46 @@ export default function AdminDashboard() {
     }));
   }, [requests, selectedYear, selectedMonth]);
 
-  const chartData = dailyData || monthlyData;
-  const xKey = dailyData ? "day" : "month";
-  const chartTitle = selectedMonth === "all"
+  // Weekly data for current year
+  const weeklyData = useMemo(() => {
+    if (!requests) return [];
+    const year = parseInt(selectedYear);
+    const filtered = requests.filter((r) => new Date(r.start_date).getFullYear() === year);
+    const weeks: Record<number, { approved: number; pending: number; rejected: number }> = {};
+    for (let i = 1; i <= 52; i++) weeks[i] = { approved: 0, pending: 0, rejected: 0 };
+
+    filtered.forEach((r) => {
+      const d = new Date(r.start_date);
+      const startOfYear = new Date(d.getFullYear(), 0, 1);
+      const diff = d.getTime() - startOfYear.getTime();
+      const week = Math.min(52, Math.max(1, Math.ceil((diff / (1000 * 60 * 60 * 24) + startOfYear.getDay() + 1) / 7)));
+      if (r.status === "Approved") weeks[week].approved++;
+      else if (r.status === "Rejected") weeks[week].rejected++;
+      else weeks[week].pending++;
+    });
+
+    return Array.from({ length: 52 }, (_, i) => ({
+      week: `W${i + 1}`,
+      ...weeks[i + 1],
+      total: weeks[i + 1].approved + weeks[i + 1].pending + weeks[i + 1].rejected,
+    }));
+  }, [requests, selectedYear]);
+
+  // Leader leave requests (view-only for admin)
+  const leaderRequests = useMemo(() => {
+    if (!requests) return [];
+    return requests.filter((r) => {
+      const profile = r.profile as any;
+      // We check if cce_status exists (leader requests have it)
+      return r.cce_status !== undefined && r.cce_status !== "N/A";
+    });
+  }, [requests]);
+
+  const chartData = analyticsView === "weekly" ? weeklyData : (dailyData || monthlyData);
+  const xKey = analyticsView === "weekly" ? "week" : (dailyData ? "day" : "month");
+  const chartTitle = analyticsView === "weekly"
+    ? `${selectedYear} — Weekly Overview`
+    : selectedMonth === "all"
     ? `${selectedYear} — Yearly Overview`
     : `${MONTH_NAMES[parseInt(selectedMonth)]} ${selectedYear} — Daily Breakdown`;
 
@@ -371,8 +411,8 @@ export default function AdminDashboard() {
                 <div className="space-y-6">
                   {/* Controls */}
                   <div className="flex flex-wrap items-center gap-3">
-                    <Select value={selectedYear} onValueChange={(v) => { setSelectedYear(v); setSelectedMonth("all"); }}>
-                      <SelectTrigger className="w-[120px]">
+                    <Select value={selectedYear} onValueChange={(v) => { setSelectedYear(v); setSelectedMonth("all"); setAnalyticsView("yearly"); }}>
+                      <SelectTrigger className="w-[100px]">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -382,27 +422,19 @@ export default function AdminDashboard() {
                       </SelectContent>
                     </Select>
 
-                    <div className="flex flex-wrap gap-1">
-                      <Button
-                        size="sm"
-                        variant={selectedMonth === "all" ? "default" : "outline"}
-                        onClick={() => setSelectedMonth("all")}
-                        className="text-xs"
-                      >
-                        All Months
-                      </Button>
-                      {MONTH_NAMES.map((name, i) => (
-                        <Button
-                          key={i}
-                          size="sm"
-                          variant={selectedMonth === String(i) ? "default" : "outline"}
-                          onClick={() => setSelectedMonth(String(i))}
-                          className="text-xs px-2"
-                        >
-                          {name}
-                        </Button>
-                      ))}
+                    <div className="flex gap-1">
+                      <Button size="sm" variant={analyticsView === "yearly" ? "default" : "outline"} onClick={() => { setAnalyticsView("yearly"); setSelectedMonth("all"); }} className="text-xs">Yearly</Button>
+                      <Button size="sm" variant={analyticsView === "weekly" ? "default" : "outline"} onClick={() => { setAnalyticsView("weekly"); setSelectedMonth("all"); }} className="text-xs">Weekly</Button>
                     </div>
+
+                    {analyticsView === "yearly" && (
+                      <div className="flex flex-wrap gap-1">
+                        <Button size="sm" variant={selectedMonth === "all" ? "default" : "outline"} onClick={() => setSelectedMonth("all")} className="text-xs">All</Button>
+                        {MONTH_NAMES.map((name, i) => (
+                          <Button key={i} size="sm" variant={selectedMonth === String(i) ? "default" : "outline"} onClick={() => { setSelectedMonth(String(i)); setAnalyticsView("yearly"); }} className="text-xs px-2">{name}</Button>
+                        ))}
+                      </div>
+                    )}
 
                     <span className="ml-auto text-xs text-muted-foreground flex items-center gap-1">
                       <span className="h-2 w-2 rounded-full bg-success animate-pulse" />
@@ -418,7 +450,7 @@ export default function AdminDashboard() {
                         {chartTitle}
                       </CardTitle>
                       <p className="text-sm text-muted-foreground">
-                        {selectedMonth === "all" ? "Monthly leave request trends" : "Daily leave request trends"}
+                        {analyticsView === "weekly" ? "Weekly leave request trends" : selectedMonth === "all" ? "Monthly leave request trends" : "Daily leave request trends"}
                       </p>
                     </CardHeader>
                     <CardContent>
@@ -617,8 +649,8 @@ export default function AdminDashboard() {
               <div className="space-y-6">
                 {/* Controls */}
                 <div className="flex flex-wrap items-center gap-3">
-                  <Select value={selectedYear} onValueChange={(v) => { setSelectedYear(v); setSelectedMonth("all"); }}>
-                    <SelectTrigger className="w-[120px]">
+                  <Select value={selectedYear} onValueChange={(v) => { setSelectedYear(v); setSelectedMonth("all"); setAnalyticsView("yearly"); }}>
+                    <SelectTrigger className="w-[100px]">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -628,27 +660,19 @@ export default function AdminDashboard() {
                     </SelectContent>
                   </Select>
 
-                  <div className="flex flex-wrap gap-1">
-                    <Button
-                      size="sm"
-                      variant={selectedMonth === "all" ? "default" : "outline"}
-                      onClick={() => setSelectedMonth("all")}
-                      className="text-xs"
-                    >
-                      All Months
-                    </Button>
-                    {MONTH_NAMES.map((name, i) => (
-                      <Button
-                        key={i}
-                        size="sm"
-                        variant={selectedMonth === String(i) ? "default" : "outline"}
-                        onClick={() => setSelectedMonth(String(i))}
-                        className="text-xs px-2"
-                      >
-                        {name}
-                      </Button>
-                    ))}
+                  <div className="flex gap-1">
+                    <Button size="sm" variant={analyticsView === "yearly" ? "default" : "outline"} onClick={() => { setAnalyticsView("yearly"); setSelectedMonth("all"); }} className="text-xs">Yearly</Button>
+                    <Button size="sm" variant={analyticsView === "weekly" ? "default" : "outline"} onClick={() => { setAnalyticsView("weekly"); setSelectedMonth("all"); }} className="text-xs">Weekly</Button>
                   </div>
+
+                  {analyticsView === "yearly" && (
+                    <div className="flex flex-wrap gap-1">
+                      <Button size="sm" variant={selectedMonth === "all" ? "default" : "outline"} onClick={() => setSelectedMonth("all")} className="text-xs">All</Button>
+                      {MONTH_NAMES.map((name, i) => (
+                        <Button key={i} size="sm" variant={selectedMonth === String(i) ? "default" : "outline"} onClick={() => { setSelectedMonth(String(i)); setAnalyticsView("yearly"); }} className="text-xs px-2">{name}</Button>
+                      ))}
+                    </div>
+                  )}
 
                   <span className="ml-auto text-xs text-muted-foreground flex items-center gap-1">
                     <span className="h-2 w-2 rounded-full bg-success animate-pulse" />
@@ -664,7 +688,7 @@ export default function AdminDashboard() {
                       {chartTitle}
                     </CardTitle>
                     <p className="text-sm text-muted-foreground">
-                      {selectedMonth === "all" ? "Monthly leave request trends" : "Daily leave request trends"}
+                      {analyticsView === "weekly" ? "Weekly leave request trends" : selectedMonth === "all" ? "Monthly leave request trends" : "Daily leave request trends"}
                     </p>
                   </CardHeader>
                   <CardContent>

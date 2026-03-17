@@ -17,6 +17,8 @@ export type Database = {
       leave_requests: {
         Row: {
           admin_comment: string
+          cce_comment: string
+          cce_status: string
           created_at: string
           end_date: string
           id: string
@@ -29,6 +31,8 @@ export type Database = {
         }
         Insert: {
           admin_comment?: string
+          cce_comment?: string
+          cce_status?: string
           created_at?: string
           end_date: string
           id?: string
@@ -41,6 +45,8 @@ export type Database = {
         }
         Update: {
           admin_comment?: string
+          cce_comment?: string
+          cce_status?: string
           created_at?: string
           end_date?: string
           id?: string
@@ -112,11 +118,12 @@ export type Database = {
         Returns: boolean
       }
       is_admin: { Args: never; Returns: boolean }
+      is_cce: { Args: never; Returns: boolean }
       is_department_leader: { Args: never; Returns: boolean }
       is_staff: { Args: never; Returns: boolean }
     }
     Enums: {
-      app_role: "staff" | "admin" | "department_leader"
+      app_role: "staff" | "admin" | "department_leader" | "cce"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -244,7 +251,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["staff", "admin", "department_leader"],
+      app_role: ["staff", "admin", "department_leader", "cce"],
     },
   },
 } as const

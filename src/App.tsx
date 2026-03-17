@@ -10,9 +10,11 @@ import StaffLogin from "./pages/StaffLogin";
 import AdminLogin from "./pages/AdminLogin";
 import AdminSignup from "./pages/AdminSignup";
 import LeaderLogin from "./pages/LeaderLogin";
+import CCELogin from "./pages/CCELogin";
 import StaffDashboard from "./pages/StaffDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
 import LeaderDashboard from "./pages/LeaderDashboard";
+import CCEDashboard from "./pages/CCEDashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -30,6 +32,7 @@ const App = () => (
             <Route path="/admin/login" element={<AdminLogin />} />
             <Route path="/admin/signup" element={<AdminSignup />} />
             <Route path="/leader/login" element={<LeaderLogin />} />
+            <Route path="/cce/login" element={<CCELogin />} />
             <Route
               path="/staff/dashboard"
               element={
@@ -51,6 +54,14 @@ const App = () => (
               element={
                 <ProtectedRoute requiredRole="department_leader">
                   <LeaderDashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/cce/dashboard"
+              element={
+                <ProtectedRoute requiredRole="cce">
+                  <CCEDashboard />
                 </ProtectedRoute>
               }
             />
