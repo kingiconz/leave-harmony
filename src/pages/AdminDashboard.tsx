@@ -450,7 +450,7 @@ export default function AdminDashboard() {
                         {chartTitle}
                       </CardTitle>
                       <p className="text-sm text-muted-foreground">
-                        {selectedMonth === "all" ? "Monthly leave request trends" : "Daily leave request trends"}
+                        {analyticsView === "weekly" ? "Weekly leave request trends" : selectedMonth === "all" ? "Monthly leave request trends" : "Daily leave request trends"}
                       </p>
                     </CardHeader>
                     <CardContent>
