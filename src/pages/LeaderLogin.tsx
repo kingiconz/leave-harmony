@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2 } from "lucide-react";
+import { Loader2, ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { DEPARTMENTS } from "@/lib/departments";
 
@@ -49,6 +49,12 @@ export default function LeaderLogin() {
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <Card className="w-full max-w-md animate-fade-in">
         <CardHeader className="text-center">
+          <div className="w-full flex justify-start">
+            <Button variant="ghost" size="sm" onClick={() => navigate("/") }>
+              <ArrowLeft className="h-4 w-4" />
+              Back
+            </Button>
+          </div>
           <img src="/favicon.ico" alt="logo" className="mx-auto mb-4 h-24 w-24" />
           <CardDescription>
             {isRegister ? "Register as a department leader" : "Sign in to manage your team's leave requests"}

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2 } from "lucide-react";
+import { Loader2, ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 export default function AdminSignup() {
@@ -39,6 +39,12 @@ export default function AdminSignup() {
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <Card className="w-full max-w-md animate-fade-in">
         <CardHeader className="text-center">
+          <div className="w-full flex justify-start">
+            <Button variant="ghost" size="sm" onClick={() => navigate("/") }>
+              <ArrowLeft className="h-4 w-4" />
+              Back
+            </Button>
+          </div>
           <img src="/favicon.ico" alt="logo" className="mx-auto mb-4 h-24 w-24" />
           <CardDescription>Register a new admin account</CardDescription>
         </CardHeader>
