@@ -74,7 +74,7 @@ export default function StaffDashboard() {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      <main className="mx-auto max-w-5xl px-4 py-8">
+      <main className="mx-auto max-w-5xl px-4 sm:px-6 py-8">
         <h1 className="mb-6 font-display text-2xl font-bold text-primary">Staff Dashboard</h1>
 
         <div className="grid gap-6 lg:grid-cols-3">
@@ -120,41 +120,46 @@ export default function StaffDashboard() {
                   <Loader2 className="h-6 w-6 animate-spin text-primary" />
                 </div>
               ) : requests && requests.length > 0 ? (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Start</TableHead>
-                      <TableHead>End</TableHead>
-                      <TableHead>Days</TableHead>
-                      <TableHead>Reason</TableHead>
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Start</TableHead>
+                        <TableHead>End</TableHead>
+                        <TableHead>Days</TableHead>
+                      <TableHead className="hidden sm:table-cell">Reason</TableHead>
                       <TableHead>Status</TableHead>
-                      <TableHead>Leader</TableHead>
-                      <TableHead>HR</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {requests.map((r) => (
-                      <TableRow key={r.id}>
-                        <TableCell className="whitespace-nowrap">{new Date(r.start_date).getFullYear().toString().slice(-2)}-{String(new Date(r.start_date).getMonth() + 1).padStart(2, '0')}-{String(new Date(r.start_date).getDate()).padStart(2, '0')}</TableCell>
-                        <TableCell className="whitespace-nowrap">{new Date(r.end_date).getFullYear().toString().slice(-2)}-{String(new Date(r.end_date).getMonth() + 1).padStart(2, '0')}-{String(new Date(r.end_date).getDate()).padStart(2, '0')}</TableCell>
-                        <TableCell className="whitespace-nowrap">
-                          {Math.ceil((new Date(r.end_date).getTime() - new Date(r.start_date).getTime()) / (1000 * 60 * 60 * 24)) + 1}
-                        </TableCell>
-                        <TableCell className="max-w-[120px] truncate">{r.reason}</TableCell>
+                      <TableHead className="hidden sm:table-cell">Leader</TableHead>
+                      <TableHead className="hidden sm:table-cell">HR</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {requests.map((r) => (
+                        <TableRow key={r.id}>
+                          <TableCell className="whitespace-nowrap">{new Date(r.start_date).getFullYear().toString().slice(-2)}-{String(new Date(r.start_date).getMonth() + 1).padStart(2, '0')}-{String(new Date(r.start_date).getDate()).padStart(2, '0')}</TableCell>
+                          <TableCell className="whitespace-nowrap">{new Date(r.end_date).getFullYear().toString().slice(-2)}-{String(new Date(r.end_date).getMonth() + 1).padStart(2, '0')}-{String(new Date(r.end_date).getDate()).padStart(2, '0')}</TableCell>
+                          <TableCell className="whitespace-nowrap">
+                            {Math.ceil((new Date(r.end_date).getTime() - new Date(r.start_date).getTime()) / (1000 * 60 * 60 * 24)) + 1}
+                          </TableCell>
+                        <TableCell className="hidden sm:table-cell max-w-[120px] truncate">{r.reason}</TableCell>
                         <TableCell>
                           <StatusBadge status={getDisplayStatus(r.leader_status, r.status)} />
+                          <p className="text-xs text-muted-foreground sm:hidden">
+                            {r.leader_comment || r.admin_comment || ""}
+                          </p>
                         </TableCell>
-                        <TableCell className="max-w-[120px] text-sm text-muted-foreground">
+                        <TableCell className="hidden sm:table-cell text-sm text-muted-foreground">
                           {r.leader_comment || "—"}
                         </TableCell>
-                        <TableCell className="max-w-[120px] text-sm text-muted-foreground">
-                          {r.admin_comment || "—"}
-                        </TableCell>
+                        <TableCell className="hidden sm:table-cell text-sm text-muted-foreground">
+                            {r.admin_comment || "—"}
+                          </TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
                   </Table>
-                ) : (
+                </div>
+              ) : (
                 <p className="py-8 text-center text-muted-foreground">No leave requests yet.</p>
               )}
             </CardContent>

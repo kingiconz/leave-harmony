@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import Navbar from "@/components/Navbar";
 import StatusBadge from "@/components/StatusBadge";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -186,16 +187,16 @@ export default function AdminDashboard() {
         <TableHeader>
           <TableRow>
             <TableHead>Staff</TableHead>
-            <TableHead>Department</TableHead>
+            <TableHead className="hidden sm:table-cell">Department</TableHead>
             <TableHead>Start</TableHead>
             <TableHead>End</TableHead>
             <TableHead>Days</TableHead>
-            <TableHead>Reason</TableHead>
+            <TableHead className="hidden sm:table-cell">Reason</TableHead>
             {showLeaderStatus && <TableHead>Leader Decision</TableHead>}
-            {showLeaderStatus && <TableHead>Leader Comment</TableHead>}
+            {showLeaderStatus && <TableHead className="hidden sm:table-cell">Leader Comment</TableHead>}
             <TableHead>HR Status</TableHead>
-            <TableHead>HR Comment</TableHead>
-            {canAct && <TableHead>Actions</TableHead>}
+            <TableHead className="hidden sm:table-cell">HR Comment</TableHead>
+            {canAct && <TableHead className="hidden sm:table-cell">Actions</TableHead>}
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -206,19 +207,20 @@ export default function AdminDashboard() {
                 <TableCell>
                   <div>
                     <p className="font-medium">{profile?.name || "—"}</p>
+                    <p className="text-xs text-muted-foreground sm:hidden">{profile?.department || "—"}</p>
                   </div>
                 </TableCell>
-                <TableCell className="whitespace-nowrap text-sm">{profile?.department || "—"}</TableCell>
+                <TableCell className="hidden sm:table-cell whitespace-nowrap text-sm">{profile?.department || "—"}</TableCell>
                 <TableCell className="whitespace-nowrap">{r.start_date}</TableCell>
                 <TableCell className="whitespace-nowrap">{r.end_date}</TableCell>
                 <TableCell className="whitespace-nowrap">
                   {Math.ceil((new Date(r.end_date).getTime() - new Date(r.start_date).getTime()) / (1000 * 60 * 60 * 24)) + 1}
                 </TableCell>
-                <TableCell className="max-w-[180px] truncate">{r.reason}</TableCell>
+                <TableCell className="hidden sm:table-cell max-w-[180px] truncate">{r.reason}</TableCell>
                 {showLeaderStatus && <TableCell><StatusBadge status={r.leader_status} /></TableCell>}
-                {showLeaderStatus && <TableCell className="text-sm text-muted-foreground">{r.leader_comment || "—"}</TableCell>}
+                {showLeaderStatus && <TableCell className="hidden sm:table-cell text-sm text-muted-foreground">{r.leader_comment || "—"}</TableCell>}
                 <TableCell><StatusBadge status={r.status} /></TableCell>
-                <TableCell>
+                <TableCell className="hidden sm:table-cell">
                   <div className="flex items-center gap-1 min-w-[180px]">
                     <Input
                       placeholder="Add comment..."
@@ -241,7 +243,7 @@ export default function AdminDashboard() {
                   </div>
                 </TableCell>
                 {canAct && (
-                  <TableCell>
+                  <TableCell className="hidden sm:table-cell">
                     {r.status === "Pending" ? (
                       <div className="flex gap-2">
                         <Button
@@ -279,226 +281,414 @@ export default function AdminDashboard() {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      <main className="mx-auto max-w-6xl px-4 py-8">
+      <main className="mx-auto max-w-6xl px-4 sm:px-6 py-8">
         <h1 className="mb-6 font-display text-2xl font-bold text-primary font-montserrat">HR Admin Dashboard</h1>
 
-        <div className="mb-8 grid grid-cols-2 gap-4 sm:grid-cols-4">
-          {stats.map((s) => (
-            <Card key={s.label} className="animate-fade-in">
-              <CardContent className="flex items-center gap-3 p-4">
-                <s.icon className={`h-8 w-8 ${s.color}`} />
-                <div>
-                  <p className="text-2xl font-bold text-foreground">{s.value}</p>
-                  <p className="text-sm text-muted-foreground">{s.label}</p>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-
-        <Tabs defaultValue="pending" className="space-y-4">
-          <TabsList>
-            <TabsTrigger value="pending">Ready for HR Review ({readyForHR.length})</TabsTrigger>
-            <TabsTrigger value="awaiting">Awaiting Leader ({pendingLeader.length})</TabsTrigger>
-            <TabsTrigger value="all">All Requests ({total})</TabsTrigger>
-            <TabsTrigger value="analytics">
-              <TrendingUp className="mr-1 h-4 w-4" />
-              Analytics
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="pending">
-            <Card className="animate-fade-in">
-              <CardHeader>
-                <CardTitle className="font-display text-lg text-primary font-montserrat">Requests Ready for HR Final Decision</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {isLoading ? (
-                  <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
-                ) : readyForHR.length > 0 ? (
-                  renderRequestTable(readyForHR, true, true)
-                ) : (
-                  <p className="py-8 text-center text-muted-foreground">No requests awaiting HR decision.</p>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="awaiting">
-            <Card className="animate-fade-in">
-              <CardHeader>
-                <CardTitle className="font-display text-lg text-primary font-montserrat">Awaiting Department Leader Review</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {isLoading ? (
-                  <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
-                ) : pendingLeader.length > 0 ? (
-                  renderRequestTable(pendingLeader, true, false)
-                ) : (
-                  <p className="py-8 text-center text-muted-foreground">No requests awaiting leader review.</p>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="all">
-            <Card className="animate-fade-in">
-              <CardHeader>
-                <CardTitle className="font-display text-lg text-primary font-montserrat">All Leave Requests</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {isLoading ? (
-                  <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
-                ) : requests && requests.length > 0 ? (
-                  renderRequestTable(requests, true, true)
-                ) : (
-                  <p className="py-8 text-center text-muted-foreground">No leave requests found.</p>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="analytics">
-            <div className="space-y-6">
-              {/* Controls */}
-              <div className="flex flex-wrap items-center gap-3">
-                <Select value={selectedYear} onValueChange={(v) => { setSelectedYear(v); setSelectedMonth("all"); }}>
-                  <SelectTrigger className="w-[120px]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {availableYears.map((y) => (
-                      <SelectItem key={y} value={y}>{y}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-
-                <div className="flex flex-wrap gap-1">
-                  <Button
-                    size="sm"
-                    variant={selectedMonth === "all" ? "default" : "outline"}
-                    onClick={() => setSelectedMonth("all")}
-                    className="text-xs"
-                  >
-                    All Months
-                  </Button>
-                  {MONTH_NAMES.map((name, i) => (
-                    <Button
-                      key={i}
-                      size="sm"
-                      variant={selectedMonth === String(i) ? "default" : "outline"}
-                      onClick={() => setSelectedMonth(String(i))}
-                      className="text-xs px-2"
-                    >
-                      {name}
-                    </Button>
+        <div className="block sm:hidden">
+          <Accordion type="single" collapsible className="space-y-3">
+            <AccordionItem value="stats">
+              <AccordionTrigger>Overview</AccordionTrigger>
+              <AccordionContent>
+                <div className="grid grid-cols-2 gap-4">
+                  {stats.map((s) => (
+                    <Card key={s.label} className="animate-fade-in">
+                      <CardContent className="flex items-center gap-3 p-4">
+                        <s.icon className={`h-8 w-8 ${s.color}`} />
+                        <div>
+                          <p className="text-2xl font-bold text-foreground">{s.value}</p>
+                          <p className="text-sm text-muted-foreground">{s.label}</p>
+                        </div>
+                      </CardContent>
+                    </Card>
                   ))}
                 </div>
+              </AccordionContent>
+            </AccordionItem>
 
-                <span className="ml-auto text-xs text-muted-foreground flex items-center gap-1">
-                  <span className="h-2 w-2 rounded-full bg-success animate-pulse" />
-                  Live
-                </span>
-              </div>
+            <AccordionItem value="pending">
+              <AccordionTrigger>Ready for HR Review ({readyForHR.length})</AccordionTrigger>
+              <AccordionContent>
+                <Card className="animate-fade-in">
+                  <CardHeader>
+                    <CardTitle className="font-display text-lg text-primary font-montserrat">Requests Ready for HR Final Decision</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {isLoading ? (
+                      <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
+                    ) : readyForHR.length > 0 ? (
+                      renderRequestTable(readyForHR, true, true)
+                    ) : (
+                      <p className="py-8 text-center text-muted-foreground">No requests awaiting HR decision.</p>
+                    )}
+                  </CardContent>
+                </Card>
+              </AccordionContent>
+            </AccordionItem>
 
-              {/* Main trend chart */}
-              <Card className="animate-fade-in">
-                <CardHeader>
-                  <CardTitle className="font-display text-lg flex items-center gap-2 text-primary font-montserrat">
-                    <TrendingUp className="h-5 w-5 text-primary" />
-                    {chartTitle}
-                  </CardTitle>
-                  <p className="text-sm text-muted-foreground">
-                    {selectedMonth === "all" ? "Monthly leave request trends" : "Daily leave request trends"}
-                  </p>
-                </CardHeader>
-                <CardContent>
-                  <div className="h-[400px]">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <AreaChart data={chartData}>
-                        <defs>
-                          <linearGradient id="gradApproved" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="hsl(var(--success))" stopOpacity={0.3} />
-                            <stop offset="95%" stopColor="hsl(var(--success))" stopOpacity={0} />
-                          </linearGradient>
-                          <linearGradient id="gradPending" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="hsl(var(--warning))" stopOpacity={0.3} />
-                            <stop offset="95%" stopColor="hsl(var(--warning))" stopOpacity={0} />
-                          </linearGradient>
-                          <linearGradient id="gradRejected" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="hsl(var(--destructive))" stopOpacity={0.3} />
-                            <stop offset="95%" stopColor="hsl(var(--destructive))" stopOpacity={0} />
-                          </linearGradient>
-                        </defs>
-                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
-                        <XAxis
-                          dataKey={xKey}
-                          tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }}
-                          axisLine={{ stroke: "hsl(var(--border))" }}
-                          tickLine={false}
-                        />
-                        <YAxis
-                          allowDecimals={false}
-                          tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }}
-                          axisLine={false}
-                          tickLine={false}
-                        />
-                        <Tooltip contentStyle={tooltipStyle} />
-                        <Legend iconType="circle" wrapperStyle={{ paddingTop: 12, fontSize: 13 }} />
-                        <Area
-                          type="monotone"
-                          dataKey="approved"
-                          name="Approved"
-                          stroke="hsl(var(--success))"
-                          strokeWidth={2.5}
-                          fill="url(#gradApproved)"
-                          dot={{ r: 3, fill: "hsl(var(--success))" }}
-                          activeDot={{ r: 5, strokeWidth: 2 }}
-                        />
-                        <Area
-                          type="monotone"
-                          dataKey="pending"
-                          name="Pending"
-                          stroke="hsl(var(--warning))"
-                          strokeWidth={2.5}
-                          fill="url(#gradPending)"
-                          dot={{ r: 3, fill: "hsl(var(--warning))" }}
-                          activeDot={{ r: 5, strokeWidth: 2 }}
-                        />
-                        <Area
-                          type="monotone"
-                          dataKey="rejected"
-                          name="Rejected"
-                          stroke="hsl(var(--destructive))"
-                          strokeWidth={2.5}
-                          fill="url(#gradRejected)"
-                          dot={{ r: 3, fill: "hsl(var(--destructive))" }}
-                          activeDot={{ r: 5, strokeWidth: 2 }}
-                        />
-                      </AreaChart>
-                    </ResponsiveContainer>
+            <AccordionItem value="awaiting">
+              <AccordionTrigger>Awaiting Leader ({pendingLeader.length})</AccordionTrigger>
+              <AccordionContent>
+                <Card className="animate-fade-in">
+                  <CardHeader>
+                    <CardTitle className="font-display text-lg text-primary font-montserrat">Awaiting Department Leader Review</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {isLoading ? (
+                      <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
+                    ) : pendingLeader.length > 0 ? (
+                      renderRequestTable(pendingLeader, true, false)
+                    ) : (
+                      <p className="py-8 text-center text-muted-foreground">No requests awaiting leader review.</p>
+                    )}
+                  </CardContent>
+                </Card>
+              </AccordionContent>
+            </AccordionItem>
+
+            <AccordionItem value="all">
+              <AccordionTrigger>All Requests ({total})</AccordionTrigger>
+              <AccordionContent>
+                <Card className="animate-fade-in">
+                  <CardHeader>
+                    <CardTitle className="font-display text-lg text-primary font-montserrat">All Leave Requests</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {isLoading ? (
+                      <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
+                    ) : requests && requests.length > 0 ? (
+                      renderRequestTable(requests, true, true)
+                    ) : (
+                      <p className="py-8 text-center text-muted-foreground">No leave requests found.</p>
+                    )}
+                  </CardContent>
+                </Card>
+              </AccordionContent>
+            </AccordionItem>
+
+            <AccordionItem value="analytics">
+              <AccordionTrigger>Analytics</AccordionTrigger>
+              <AccordionContent>
+                <div className="space-y-6">
+                  {/* Controls */}
+                  <div className="flex flex-wrap items-center gap-3">
+                    <Select value={selectedYear} onValueChange={(v) => { setSelectedYear(v); setSelectedMonth("all"); }}>
+                      <SelectTrigger className="w-[120px]">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {availableYears.map((y) => (
+                          <SelectItem key={y} value={y}>{y}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+
+                    <div className="flex flex-wrap gap-1">
+                      <Button
+                        size="sm"
+                        variant={selectedMonth === "all" ? "default" : "outline"}
+                        onClick={() => setSelectedMonth("all")}
+                        className="text-xs"
+                      >
+                        All Months
+                      </Button>
+                      {MONTH_NAMES.map((name, i) => (
+                        <Button
+                          key={i}
+                          size="sm"
+                          variant={selectedMonth === String(i) ? "default" : "outline"}
+                          onClick={() => setSelectedMonth(String(i))}
+                          className="text-xs px-2"
+                        >
+                          {name}
+                        </Button>
+                      ))}
+                    </div>
+
+                    <span className="ml-auto text-xs text-muted-foreground flex items-center gap-1">
+                      <span className="h-2 w-2 rounded-full bg-success animate-pulse" />
+                      Live
+                    </span>
+                  </div>
+
+                  {/* Main trend chart */}
+                  <Card className="animate-fade-in">
+                    <CardHeader>
+                      <CardTitle className="font-display text-lg flex items-center gap-2 text-primary font-montserrat">
+                        <TrendingUp className="h-5 w-5 text-primary" />
+                        {chartTitle}
+                      </CardTitle>
+                      <p className="text-sm text-muted-foreground">
+                        {selectedMonth === "all" ? "Monthly leave request trends" : "Daily leave request trends"}
+                      </p>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="h-[400px]">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <AreaChart data={chartData}>
+                            <defs>
+                              <linearGradient id="gradApproved" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="5%" stopColor="hsl(var(--success))" stopOpacity={0.3} />
+                                <stop offset="95%" stopColor="hsl(var(--success))" stopOpacity={0} />
+                              </linearGradient>
+                              <linearGradient id="gradPending" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="5%" stopColor="hsl(var(--warning))" stopOpacity={0.3} />
+                                <stop offset="95%" stopColor="hsl(var(--warning))" stopOpacity={0} />
+                              </linearGradient>
+                              <linearGradient id="gradRejected" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="5%" stopColor="hsl(var(--destructive))" stopOpacity={0.3} />
+                                <stop offset="95%" stopColor="hsl(var(--destructive))" stopOpacity={0} />
+                              </linearGradient>
+                            </defs>
+                            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+                            <XAxis
+                              dataKey={xKey}
+                              tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }}
+                              axisLine={{ stroke: "hsl(var(--border))" }}
+                              tickLine={false}
+                            />
+                            <YAxis
+                              allowDecimals={false}
+                              tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }}
+                              axisLine={false}
+                              tickLine={false}
+                            />
+                            <Tooltip contentStyle={tooltipStyle} />
+                            <Legend iconType="circle" wrapperStyle={{ paddingTop: 12, fontSize: 13 }} />
+                            <Area
+                              type="monotone"
+                              dataKey="approved"
+                              name="Approved"
+                              stroke="hsl(var(--success))"
+                              strokeWidth={2.5}
+                              fill="url(#gradApproved)"
+                              dot={{ r: 3, fill: "hsl(var(--success))" }}
+                              activeDot={{ r: 5, strokeWidth: 2 }}
+                            />
+                            <Area
+                              type="monotone"
+                              dataKey="pending"
+                              name="Pending"
+                              stroke="hsl(var(--warning))"
+                              strokeWidth={2.5}
+                              fill="url(#gradPending)"
+                              dot={{ r: 3, fill: "hsl(var(--warning))" }}
+                              activeDot={{ r: 5, strokeWidth: 2 }}
+                            />
+                            <Area
+                              type="monotone"
+                              dataKey="rejected"
+                              name="Rejected"
+                              stroke="hsl(var(--destructive))"
+                              strokeWidth={2.5}
+                              fill="url(#gradRejected)"
+                              dot={{ r: 3, fill: "hsl(var(--destructive))" }}
+                              activeDot={{ r: 5, strokeWidth: 2 }}
+                            />
+                          </AreaChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Department breakdown */}
+                  <Card className="animate-fade-in">
+                    <CardHeader>
+                      <CardTitle className="font-display text-lg text-primary font-montserrat">Department Breakdown</CardTitle>
+                      <p className="text-sm text-muted-foreground">
+                        Leave distribution by department
+                        {selectedMonth !== "all" && ` — ${MONTH_NAMES[parseInt(selectedMonth)]} ${selectedYear}`}
+                      </p>
+                    </CardHeader>
+                    <CardContent>
+                      {departmentData.length > 0 ? (
+                        <div className="h-[320px]">
+                          <ResponsiveContainer width="100%" height="100%">
+                            <LineChart data={departmentData}>
+                              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+                              <XAxis
+                                dataKey="name"
+                                tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }}
+                                axisLine={{ stroke: "hsl(var(--border))" }}
+                                tickLine={false}
+                              />
+                              <YAxis
+                                allowDecimals={false}
+                                tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }}
+                                axisLine={false}
+                                tickLine={false}
+                              />
+                              <Tooltip contentStyle={tooltipStyle} />
+                              <Legend iconType="circle" wrapperStyle={{ paddingTop: 12, fontSize: 13 }} />
+                              <Line type="monotone" dataKey="approved" name="Approved" stroke="hsl(var(--success))" strokeWidth={2.5} dot={{ r: 4, fill: "hsl(var(--success))" }} />
+                              <Line type="monotone" dataKey="pending" name="Pending" stroke="hsl(var(--warning))" strokeWidth={2.5} dot={{ r: 4, fill: "hsl(var(--warning))" }} />
+                              <Line type="monotone" dataKey="rejected" name="Rejected" stroke="hsl(var(--destructive))" strokeWidth={2.5} dot={{ r: 4, fill: "hsl(var(--destructive))" }} />
+                            </LineChart>
+                          </ResponsiveContainer>
+                        </div>
+                      ) : (
+                        <p className="py-8 text-center text-muted-foreground">No data for this period.</p>
+                      )}
+                    </CardContent>
+                  </Card>
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
+        </div>
+
+        <div className="hidden sm:block">
+          <div className="mb-8 grid grid-cols-2 gap-4 sm:grid-cols-4">
+            {stats.map((s) => (
+              <Card key={s.label} className="animate-fade-in">
+                <CardContent className="flex items-center gap-3 p-4">
+                  <s.icon className={`h-8 w-8 ${s.color}`} />
+                  <div>
+                    <p className="text-2xl font-bold text-foreground">{s.value}</p>
+                    <p className="text-sm text-muted-foreground">{s.label}</p>
                   </div>
                 </CardContent>
               </Card>
+            ))}
+          </div>
 
-              {/* Department breakdown */}
+          <Tabs defaultValue="pending" className="space-y-4">
+            <TabsList>
+              <TabsTrigger value="pending">Ready for HR Review ({readyForHR.length})</TabsTrigger>
+              <TabsTrigger value="awaiting">Awaiting Leader ({pendingLeader.length})</TabsTrigger>
+              <TabsTrigger value="all">All Requests ({total})</TabsTrigger>
+              <TabsTrigger value="analytics">
+                <TrendingUp className="mr-1 h-4 w-4" />
+                Analytics
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="pending">
               <Card className="animate-fade-in">
                 <CardHeader>
-                  <CardTitle className="font-display text-lg text-primary font-montserrat">Department Breakdown</CardTitle>
-                  <p className="text-sm text-muted-foreground">
-                    Leave distribution by department
-                    {selectedMonth !== "all" && ` — ${MONTH_NAMES[parseInt(selectedMonth)]} ${selectedYear}`}
-                  </p>
+                  <CardTitle className="font-display text-lg text-primary font-montserrat">Requests Ready for HR Final Decision</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  {departmentData.length > 0 ? (
-                    <div className="h-[320px]">
+                  {isLoading ? (
+                    <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
+                  ) : readyForHR.length > 0 ? (
+                    renderRequestTable(readyForHR, true, true)
+                  ) : (
+                    <p className="py-8 text-center text-muted-foreground">No requests awaiting HR decision.</p>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="awaiting">
+              <Card className="animate-fade-in">
+                <CardHeader>
+                  <CardTitle className="font-display text-lg text-primary font-montserrat">Awaiting Department Leader Review</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {isLoading ? (
+                    <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
+                  ) : pendingLeader.length > 0 ? (
+                    renderRequestTable(pendingLeader, true, false)
+                  ) : (
+                    <p className="py-8 text-center text-muted-foreground">No requests awaiting leader review.</p>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="all">
+              <Card className="animate-fade-in">
+                <CardHeader>
+                  <CardTitle className="font-display text-lg text-primary font-montserrat">All Leave Requests</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {isLoading ? (
+                    <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
+                  ) : requests && requests.length > 0 ? (
+                    renderRequestTable(requests, true, true)
+                  ) : (
+                    <p className="py-8 text-center text-muted-foreground">No leave requests found.</p>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="analytics">
+              <div className="space-y-6">
+                {/* Controls */}
+                <div className="flex flex-wrap items-center gap-3">
+                  <Select value={selectedYear} onValueChange={(v) => { setSelectedYear(v); setSelectedMonth("all"); }}>
+                    <SelectTrigger className="w-[120px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {availableYears.map((y) => (
+                        <SelectItem key={y} value={y}>{y}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+
+                  <div className="flex flex-wrap gap-1">
+                    <Button
+                      size="sm"
+                      variant={selectedMonth === "all" ? "default" : "outline"}
+                      onClick={() => setSelectedMonth("all")}
+                      className="text-xs"
+                    >
+                      All Months
+                    </Button>
+                    {MONTH_NAMES.map((name, i) => (
+                      <Button
+                        key={i}
+                        size="sm"
+                        variant={selectedMonth === String(i) ? "default" : "outline"}
+                        onClick={() => setSelectedMonth(String(i))}
+                        className="text-xs px-2"
+                      >
+                        {name}
+                      </Button>
+                    ))}
+                  </div>
+
+                  <span className="ml-auto text-xs text-muted-foreground flex items-center gap-1">
+                    <span className="h-2 w-2 rounded-full bg-success animate-pulse" />
+                    Live
+                  </span>
+                </div>
+
+                {/* Main trend chart */}
+                <Card className="animate-fade-in">
+                  <CardHeader>
+                    <CardTitle className="font-display text-lg flex items-center gap-2 text-primary font-montserrat">
+                      <TrendingUp className="h-5 w-5 text-primary" />
+                      {chartTitle}
+                    </CardTitle>
+                    <p className="text-sm text-muted-foreground">
+                      {selectedMonth === "all" ? "Monthly leave request trends" : "Daily leave request trends"}
+                    </p>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="h-[400px]">
                       <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={departmentData}>
+                        <AreaChart data={chartData}>
+                          <defs>
+                            <linearGradient id="gradApproved" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="5%" stopColor="hsl(var(--success))" stopOpacity={0.3} />
+                              <stop offset="95%" stopColor="hsl(var(--success))" stopOpacity={0} />
+                            </linearGradient>
+                            <linearGradient id="gradPending" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="5%" stopColor="hsl(var(--warning))" stopOpacity={0.3} />
+                              <stop offset="95%" stopColor="hsl(var(--warning))" stopOpacity={0} />
+                            </linearGradient>
+                            <linearGradient id="gradRejected" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="5%" stopColor="hsl(var(--destructive))" stopOpacity={0.3} />
+                              <stop offset="95%" stopColor="hsl(var(--destructive))" stopOpacity={0} />
+                            </linearGradient>
+                          </defs>
                           <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
                           <XAxis
-                            dataKey="name"
-                            tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }}
+                            dataKey={xKey}
+                            tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }}
                             axisLine={{ stroke: "hsl(var(--border))" }}
                             tickLine={false}
                           />
@@ -510,20 +700,86 @@ export default function AdminDashboard() {
                           />
                           <Tooltip contentStyle={tooltipStyle} />
                           <Legend iconType="circle" wrapperStyle={{ paddingTop: 12, fontSize: 13 }} />
-                          <Line type="monotone" dataKey="approved" name="Approved" stroke="hsl(var(--success))" strokeWidth={2.5} dot={{ r: 4, fill: "hsl(var(--success))" }} />
-                          <Line type="monotone" dataKey="pending" name="Pending" stroke="hsl(var(--warning))" strokeWidth={2.5} dot={{ r: 4, fill: "hsl(var(--warning))" }} />
-                          <Line type="monotone" dataKey="rejected" name="Rejected" stroke="hsl(var(--destructive))" strokeWidth={2.5} dot={{ r: 4, fill: "hsl(var(--destructive))" }} />
-                        </LineChart>
+                          <Area
+                            type="monotone"
+                            dataKey="approved"
+                            name="Approved"
+                            stroke="hsl(var(--success))"
+                            strokeWidth={2.5}
+                            fill="url(#gradApproved)"
+                            dot={{ r: 3, fill: "hsl(var(--success))" }}
+                            activeDot={{ r: 5, strokeWidth: 2 }}
+                          />
+                          <Area
+                            type="monotone"
+                            dataKey="pending"
+                            name="Pending"
+                            stroke="hsl(var(--warning))"
+                            strokeWidth={2.5}
+                            fill="url(#gradPending)"
+                            dot={{ r: 3, fill: "hsl(var(--warning))" }}
+                            activeDot={{ r: 5, strokeWidth: 2 }}
+                          />
+                          <Area
+                            type="monotone"
+                            dataKey="rejected"
+                            name="Rejected"
+                            stroke="hsl(var(--destructive))"
+                            strokeWidth={2.5}
+                            fill="url(#gradRejected)"
+                            dot={{ r: 3, fill: "hsl(var(--destructive))" }}
+                            activeDot={{ r: 5, strokeWidth: 2 }}
+                          />
+                        </AreaChart>
                       </ResponsiveContainer>
                     </div>
-                  ) : (
-                    <p className="py-8 text-center text-muted-foreground">No data for this period.</p>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
-        </Tabs>
+                  </CardContent>
+                </Card>
+
+                {/* Department breakdown */}
+                <Card className="animate-fade-in">
+                  <CardHeader>
+                    <CardTitle className="font-display text-lg text-primary font-montserrat">Department Breakdown</CardTitle>
+                    <p className="text-sm text-muted-foreground">
+                      Leave distribution by department
+                      {selectedMonth !== "all" && ` — ${MONTH_NAMES[parseInt(selectedMonth)]} ${selectedYear}`}
+                    </p>
+                  </CardHeader>
+                  <CardContent>
+                    {departmentData.length > 0 ? (
+                      <div className="h-[320px]">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <LineChart data={departmentData}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+                            <XAxis
+                              dataKey="name"
+                              tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }}
+                              axisLine={{ stroke: "hsl(var(--border))" }}
+                              tickLine={false}
+                            />
+                            <YAxis
+                              allowDecimals={false}
+                              tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }}
+                              axisLine={false}
+                              tickLine={false}
+                            />
+                            <Tooltip contentStyle={tooltipStyle} />
+                            <Legend iconType="circle" wrapperStyle={{ paddingTop: 12, fontSize: 13 }} />
+                            <Line type="monotone" dataKey="approved" name="Approved" stroke="hsl(var(--success))" strokeWidth={2.5} dot={{ r: 4, fill: "hsl(var(--success))" }} />
+                            <Line type="monotone" dataKey="pending" name="Pending" stroke="hsl(var(--warning))" strokeWidth={2.5} dot={{ r: 4, fill: "hsl(var(--warning))" }} />
+                            <Line type="monotone" dataKey="rejected" name="Rejected" stroke="hsl(var(--destructive))" strokeWidth={2.5} dot={{ r: 4, fill: "hsl(var(--destructive))" }} />
+                          </LineChart>
+                        </ResponsiveContainer>
+                      </div>
+                    ) : (
+                      <p className="py-8 text-center text-muted-foreground">No data for this period.</p>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+            </TabsContent>
+          </Tabs>
+        </div>
       </main>
     </div>
   );

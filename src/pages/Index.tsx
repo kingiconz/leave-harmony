@@ -8,7 +8,7 @@ const Index = () => {
 
       {/* NAVBAR */}
       <nav className="h-16 border-b bg-white/80 backdrop-blur flex items-center">
-        <div className="max-w-7xl mx-auto px-6 w-full flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 w-full flex items-center justify-between">
 
           <div className="flex items-center gap-3">
             <img src="/favicon.ico" className="h-14 w-14"/>
@@ -28,12 +28,12 @@ const Index = () => {
       {/* MAIN CONTENT */}
       <main className="flex-1 flex items-center">
 
-        <div className="max-w-7xl mx-auto px-6 grid lg:grid-cols-2 gap-12 items-center w-full">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 grid lg:grid-cols-2 gap-8 lg:gap-12 items-center w-full">
 
           {/* LEFT */}
           <div>
 
-            <h1 className="text-3xl font-bold text-blue-600 leading-tight mb-6 font-montserrat">
+            <h1 className="text-2xl sm:text-3xl font-bold text-blue-600 leading-tight mb-6 font-montserrat">
               Leave
               <br />
               Management System
@@ -48,20 +48,20 @@ const Index = () => {
             </Button>
 
             {/* FEATURES */}
-            <div className="flex gap-6 mt-10 font-montserrat">
+            <div className="flex flex-col gap-4 sm:flex-row sm:gap-6 mt-10 font-montserrat">
 
               <div className="flex items-center gap-2 text-slate-700">
-                <CalendarDays className="text-indigo-600"/>
+                <CalendarDays className="text-indigo-600 flex-shrink-0"/>
                 Leave Calendar
               </div>
 
               <div className="flex items-center gap-2 text-slate-700">
-                <Workflow className="text-indigo-600"/>
+                <Workflow className="text-indigo-600 flex-shrink-0"/>
                 Approval Flow
               </div>
 
               <div className="flex items-center gap-2 text-slate-700">
-                <BarChart3 className="text-indigo-600"/>
+                <BarChart3 className="text-indigo-600 flex-shrink-0"/>
                 HR Insights
               </div>
 
@@ -87,7 +87,7 @@ const Index = () => {
 
 
       {/* FOOTER */}
-      <footer className="h-12 border-t flex items-center justify-center text-sm text-slate-500 font-montserrat">
+      <footer className="h-12 border-t flex items-center justify-center px-4 sm:px-6 text-sm text-slate-500 font-montserrat">
         © {new Date().getFullYear()} LeaveTrack
       </footer>
 

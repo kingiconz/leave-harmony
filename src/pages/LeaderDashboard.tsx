@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import Navbar from "@/components/Navbar";
 import StatusBadge from "@/components/StatusBadge";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -75,121 +76,253 @@ export default function LeaderDashboard() {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      <main className="mx-auto max-w-5xl px-4 py-8">
+      <main className="mx-auto max-w-5xl px-4 sm:px-6 py-8">
         <h1 className="mb-6 font-display text-2xl font-bold text-primary">Department Leader Dashboard</h1>
 
-        <div className="mb-8 grid grid-cols-2 gap-4 sm:grid-cols-4">
-          {stats.map((s) => (
-            <Card key={s.label} className="animate-fade-in">
-              <CardContent className="flex items-center gap-3 p-4">
-                <s.icon className={`h-8 w-8 ${s.color}`} />
-                <div>
-                  <p className="text-2xl font-bold text-foreground">{s.value}</p>
-                  <p className="text-sm text-muted-foreground">{s.label}</p>
+        <div className="block sm:hidden">
+          <Accordion type="single" collapsible className="space-y-3">
+            <AccordionItem value="stats">
+              <AccordionTrigger>Overview</AccordionTrigger>
+              <AccordionContent>
+                <div className="grid grid-cols-2 gap-4">
+                  {stats.map((s) => (
+                    <Card key={s.label} className="animate-fade-in">
+                      <CardContent className="flex items-center gap-3 p-4">
+                        <s.icon className={`h-8 w-8 ${s.color}`} />
+                        <div>
+                          <p className="text-2xl font-bold text-foreground">{s.value}</p>
+                          <p className="text-sm text-muted-foreground">{s.label}</p>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
                 </div>
-              </CardContent>
-            </Card>
-          ))}
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="requests">
+              <AccordionTrigger>Team Leave Requests</AccordionTrigger>
+              <AccordionContent>
+                <Card className="animate-fade-in">
+                  <CardHeader>
+                    <CardTitle className="font-display text-lg text-primary">Team Leave Requests</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {isLoading ? (
+                      <div className="flex justify-center py-8">
+                        <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                      </div>
+                    ) : requests && requests.length > 0 ? (
+                      <div className="overflow-x-auto">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Staff</TableHead>
+                              <TableHead>Start</TableHead>
+                              <TableHead>End</TableHead>
+                              <TableHead>Days</TableHead>
+                              <TableHead className="hidden sm:table-cell">Reason</TableHead>
+                              <TableHead>Status</TableHead>
+                              <TableHead className="hidden sm:table-cell">Comment</TableHead>
+                              <TableHead className="hidden sm:table-cell">Actions</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {requests.map((r) => {
+                              const profile = r.profile as any;
+                              return (
+                                <TableRow key={r.id}>
+                                  <TableCell>
+                                    <div>
+                                      <p className="font-medium">{profile?.name || "—"}</p>
+                                    </div>
+                                  </TableCell>
+                                  <TableCell className="whitespace-nowrap">{new Date(r.start_date).getFullYear().toString().slice(-2)}-{String(new Date(r.start_date).getMonth() + 1).padStart(2, '0')}-{String(new Date(r.start_date).getDate()).padStart(2, '0')}</TableCell>
+                                  <TableCell className="whitespace-nowrap">{new Date(r.end_date).getFullYear().toString().slice(-2)}-{String(new Date(r.end_date).getMonth() + 1).padStart(2, '0')}-{String(new Date(r.end_date).getDate()).padStart(2, '0')}</TableCell>
+                                  <TableCell className="whitespace-nowrap">
+                                    {Math.ceil((new Date(r.end_date).getTime() - new Date(r.start_date).getTime()) / (1000 * 60 * 60 * 24)) + 1}
+                                  </TableCell>
+                                  <TableCell className="hidden sm:table-cell max-w-[120px] truncate">{r.reason}</TableCell>
+                                  <TableCell><StatusBadge status={r.leader_status} /></TableCell>
+                                  <TableCell className="hidden sm:table-cell">
+                                    <div className="flex items-center gap-1 min-w-[120px]">
+                                      <Input
+                                        placeholder="Add comment..."
+                                        value={comments[r.id] ?? r.leader_comment ?? ""}
+                                        onChange={(e) => setComments((prev) => ({ ...prev, [r.id]: e.target.value }))}
+                                        className="h-8 text-xs"
+                                      />
+                                      <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        className="h-8 px-2"
+                                        disabled={updateMutation.isPending}
+                                        onClick={() => {
+                                          const comment = comments[r.id] ?? r.leader_comment ?? "";
+                                          updateMutation.mutate({ id: r.id, leader_status: r.leader_status, leader_comment: comment });
+                                        }}
+                                      >
+                                        <MessageSquare className="h-4 w-4" />
+                                      </Button>
+                                    </div>
+                                  </TableCell>
+                                  <TableCell className="hidden sm:table-cell">
+                                    {r.leader_status === "Pending" ? (
+                                      <div className="flex gap-2">
+                                        <Button
+                                          size="sm"
+                                          variant="outline"
+                                          className="border-success/40 text-success hover:bg-success/10"
+                                          onClick={() => updateMutation.mutate({ id: r.id, leader_status: "Approved", leader_comment: comments[r.id] ?? r.leader_comment })}
+                                          disabled={updateMutation.isPending}
+                                        >
+                                          Approve
+                                        </Button>
+                                        <Button
+                                          size="sm"
+                                          variant="outline"
+                                          className="border-destructive/40 text-destructive hover:bg-destructive/10"
+                                          onClick={() => updateMutation.mutate({ id: r.id, leader_status: "Rejected", leader_comment: comments[r.id] ?? r.leader_comment })}
+                                          disabled={updateMutation.isPending}
+                                        >
+                                          Reject
+                                        </Button>
+                                      </div>
+                                    ) : (
+                                      <span className="text-xs text-muted-foreground">Reviewed</span>
+                                    )}
+                                  </TableCell>
+                                </TableRow>
+                              );
+                            })}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    ) : (
+                      <p className="py-8 text-center text-muted-foreground">No leave requests from your department.</p>
+                    )}
+                  </CardContent>
+                </Card>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
         </div>
 
-        <Card className="animate-fade-in">
-          <CardHeader>
-            <CardTitle className="font-display text-lg text-primary">Team Leave Requests</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <div className="flex justify-center py-8">
-                <Loader2 className="h-6 w-6 animate-spin text-primary" />
-              </div>
-            ) : requests && requests.length > 0 ? (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Staff</TableHead>
-                    <TableHead>Start</TableHead>
-                    <TableHead>End</TableHead>
-                    <TableHead>Days</TableHead>
-                    <TableHead>Reason</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Comment</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                  <TableBody>
-                    {requests.map((r) => {
-                      const profile = r.profile as any;
-                      return (
-                        <TableRow key={r.id}>
-                          <TableCell>
-                            <div>
-                              <p className="font-medium">{profile?.name || "—"}</p>
-                            </div>
-                          </TableCell>
-                          <TableCell className="whitespace-nowrap">{new Date(r.start_date).getFullYear().toString().slice(-2)}-{String(new Date(r.start_date).getMonth() + 1).padStart(2, '0')}-{String(new Date(r.start_date).getDate()).padStart(2, '0')}</TableCell>
-                          <TableCell className="whitespace-nowrap">{new Date(r.end_date).getFullYear().toString().slice(-2)}-{String(new Date(r.end_date).getMonth() + 1).padStart(2, '0')}-{String(new Date(r.end_date).getDate()).padStart(2, '0')}</TableCell>
-                          <TableCell className="whitespace-nowrap">
-                            {Math.ceil((new Date(r.end_date).getTime() - new Date(r.start_date).getTime()) / (1000 * 60 * 60 * 24)) + 1}
-                          </TableCell>
-                          <TableCell className="max-w-[120px] truncate">{r.reason}</TableCell>
-                          <TableCell><StatusBadge status={r.leader_status} /></TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-1 min-w-[120px]">
-                              <Input
-                                placeholder="Add comment..."
-                                value={comments[r.id] ?? r.leader_comment ?? ""}
-                                onChange={(e) => setComments((prev) => ({ ...prev, [r.id]: e.target.value }))}
-                                className="h-8 text-xs"
-                              />
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                className="h-8 px-2"
-                                disabled={updateMutation.isPending}
-                                onClick={() => {
-                                  const comment = comments[r.id] ?? r.leader_comment ?? "";
-                                  updateMutation.mutate({ id: r.id, leader_status: r.leader_status, leader_comment: comment });
-                                }}
-                              >
-                                <MessageSquare className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            {r.leader_status === "Pending" ? (
-                              <div className="flex gap-2">
+        <div className="hidden sm:block">
+          <div className="mb-8 grid grid-cols-2 gap-4 sm:grid-cols-4">
+            {stats.map((s) => (
+              <Card key={s.label} className="animate-fade-in">
+                <CardContent className="flex items-center gap-3 p-4">
+                  <s.icon className={`h-8 w-8 ${s.color}`} />
+                  <div>
+                    <p className="text-2xl font-bold text-foreground">{s.value}</p>
+                    <p className="text-sm text-muted-foreground">{s.label}</p>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          <Card className="animate-fade-in">
+            <CardHeader>
+              <CardTitle className="font-display text-lg text-primary">Team Leave Requests</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {isLoading ? (
+                <div className="flex justify-center py-8">
+                  <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                </div>
+              ) : requests && requests.length > 0 ? (
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Staff</TableHead>
+                        <TableHead>Start</TableHead>
+                        <TableHead>End</TableHead>
+                        <TableHead>Days</TableHead>
+                        <TableHead className="hidden sm:table-cell">Reason</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead className="hidden sm:table-cell">Comment</TableHead>
+                        <TableHead className="hidden sm:table-cell">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {requests.map((r) => {
+                        const profile = r.profile as any;
+                        return (
+                          <TableRow key={r.id}>
+                            <TableCell>
+                              <div>
+                                <p className="font-medium">{profile?.name || "—"}</p>
+                              </div>
+                            </TableCell>
+                            <TableCell className="whitespace-nowrap">{new Date(r.start_date).getFullYear().toString().slice(-2)}-{String(new Date(r.start_date).getMonth() + 1).padStart(2, '0')}-{String(new Date(r.start_date).getDate()).padStart(2, '0')}</TableCell>
+                            <TableCell className="whitespace-nowrap">{new Date(r.end_date).getFullYear().toString().slice(-2)}-{String(new Date(r.end_date).getMonth() + 1).padStart(2, '0')}-{String(new Date(r.end_date).getDate()).padStart(2, '0')}</TableCell>
+                            <TableCell className="whitespace-nowrap">
+                              {Math.ceil((new Date(r.end_date).getTime() - new Date(r.start_date).getTime()) / (1000 * 60 * 60 * 24)) + 1}
+                            </TableCell>
+                            <TableCell className="hidden sm:table-cell max-w-[120px] truncate">{r.reason}</TableCell>
+                            <TableCell><StatusBadge status={r.leader_status} /></TableCell>
+                            <TableCell className="hidden sm:table-cell">
+                              <div className="flex items-center gap-1 min-w-[120px]">
+                                <Input
+                                  placeholder="Add comment..."
+                                  value={comments[r.id] ?? r.leader_comment ?? ""}
+                                  onChange={(e) => setComments((prev) => ({ ...prev, [r.id]: e.target.value }))}
+                                  className="h-8 text-xs"
+                                />
                                 <Button
                                   size="sm"
-                                  variant="outline"
-                                  className="border-success/40 text-success hover:bg-success/10"
-                                  onClick={() => updateMutation.mutate({ id: r.id, leader_status: "Approved", leader_comment: comments[r.id] ?? r.leader_comment })}
+                                  variant="ghost"
+                                  className="h-8 px-2"
                                   disabled={updateMutation.isPending}
+                                  onClick={() => {
+                                    const comment = comments[r.id] ?? r.leader_comment ?? "";
+                                    updateMutation.mutate({ id: r.id, leader_status: r.leader_status, leader_comment: comment });
+                                  }}
                                 >
-                                  Approve
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  className="border-destructive/40 text-destructive hover:bg-destructive/10"
-                                  onClick={() => updateMutation.mutate({ id: r.id, leader_status: "Rejected", leader_comment: comments[r.id] ?? r.leader_comment })}
-                                  disabled={updateMutation.isPending}
-                                >
-                                  Reject
+                                  <MessageSquare className="h-4 w-4" />
                                 </Button>
                               </div>
-                            ) : (
-                              <span className="text-xs text-muted-foreground">Reviewed</span>
-                            )}
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
+                            </TableCell>
+                            <TableCell className="hidden sm:table-cell">
+                              {r.leader_status === "Pending" ? (
+                                <div className="flex gap-2">
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="border-success/40 text-success hover:bg-success/10"
+                                    onClick={() => updateMutation.mutate({ id: r.id, leader_status: "Approved", leader_comment: comments[r.id] ?? r.leader_comment })}
+                                    disabled={updateMutation.isPending}
+                                  >
+                                    Approve
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="border-destructive/40 text-destructive hover:bg-destructive/10"
+                                    onClick={() => updateMutation.mutate({ id: r.id, leader_status: "Rejected", leader_comment: comments[r.id] ?? r.leader_comment })}
+                                    disabled={updateMutation.isPending}
+                                  >
+                                    Reject
+                                  </Button>
+                                </div>
+                              ) : (
+                                <span className="text-xs text-muted-foreground">Reviewed</span>
+                              )}
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </div>
               ) : (
-              <p className="py-8 text-center text-muted-foreground">No leave requests from your department.</p>
-            )}
-          </CardContent>
-        </Card>
+                <p className="py-8 text-center text-muted-foreground">No leave requests from your department.</p>
+              )}
+            </CardContent>
+          </Card>
+        </div>
       </main>
     </div>
   );
