@@ -4,8 +4,22 @@ import { Loader2 } from "lucide-react";
 
 interface Props {
   children: React.ReactNode;
-  requiredRole: "staff" | "admin" | "department_leader";
+  requiredRole: "staff" | "admin" | "department_leader" | "cce";
 }
+
+const loginPaths: Record<string, string> = {
+  staff: "/staff/login",
+  admin: "/admin/login",
+  department_leader: "/leader/login",
+  cce: "/cce/login",
+};
+
+const dashboardPaths: Record<string, string> = {
+  staff: "/staff/dashboard",
+  admin: "/admin/dashboard",
+  department_leader: "/leader/dashboard",
+  cce: "/cce/dashboard",
+};
 
 export default function ProtectedRoute({ children, requiredRole }: Props) {
   const { user, role, loading } = useAuth();
@@ -19,8 +33,7 @@ export default function ProtectedRoute({ children, requiredRole }: Props) {
   }
 
   if (!user) {
-    const loginPath = requiredRole === "department_leader" ? "/leader/login" : `/${requiredRole}/login`;
-    return <Navigate to={loginPath} replace />;
+    return <Navigate to={loginPaths[requiredRole] || "/staff/login"} replace />;
   }
 
   if (!role) {
@@ -32,8 +45,7 @@ export default function ProtectedRoute({ children, requiredRole }: Props) {
   }
 
   if (role !== requiredRole) {
-    const dashboardPath = role === "department_leader" ? "/leader/dashboard" : `/${role}/dashboard`;
-    return <Navigate to={dashboardPath} replace />;
+    return <Navigate to={dashboardPaths[role] || "/staff/dashboard"} replace />;
   }
 
   return <>{children}</>;

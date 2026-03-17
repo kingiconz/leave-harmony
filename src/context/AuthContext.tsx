@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useState, ReactNode } from "react
 import { supabase } from "@/integrations/supabase/client";
 import type { User, Session } from "@supabase/supabase-js";
 
-type AppRole = "staff" | "admin" | "department_leader";
+type AppRole = "staff" | "admin" | "department_leader" | "cce";
 
 interface AuthContextType {
   user: User | null;
@@ -10,7 +10,6 @@ interface AuthContextType {
   role: AppRole | null;
   loading: boolean;
   signUp: (email: string, password: string, name: string, extra?: Record<string, string>) => Promise<void>;
-  // department can be passed during sign-in to keep profile up to date
   signIn: (email: string, password: string, department?: string) => Promise<void>;
   signOut: () => Promise<void>;
 }
