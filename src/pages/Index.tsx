@@ -146,12 +146,11 @@ const Index = () => {
       <div className="relative z-10 flex flex-col min-h-screen">
 
         {/* NAV */}
-        <nav className="flex justify-between px-6 py-5 text-white">
-          <div className="flex items-center gap-3">
-            <img src="https://e-crimebureau.com/wp-content/uploads/2025/10/cropped-APPROVED-NEW-LOGO.png" alt="logo" className="w-16 h-16" />
-            <span className="font-montserrat text-2xl font-bold text-white">LeaveTrack</span>
+        <nav className="flex justify-start px-1 py-1 text-white">
+          <div className="flex items-center gap-0">
+            <img src="https://i.ibb.co/4nTsnd9v/e-Crime-Bureau-logo-white.png" alt="e Crime Bureau logo white" className="w-32 h-32" />
+            <span className="-ml-6 font-montserrat text-2xl font-bold text-white">LeaveTrack</span>
           </div>
-          <div></div>
         </nav>
 
         {/* MAIN */}
