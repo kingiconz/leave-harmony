@@ -121,39 +121,57 @@ export default function StaffDashboard() {
                 </div>
               ) : requests && requests.length > 0 ? (
                 <div className="overflow-x-auto">
-                  <Table>
+                  {/* Mobile card view */}
+                  <div className="space-y-3 sm:hidden">
+                    {requests.map((r) => {
+                      const days = Math.ceil((new Date(r.end_date).getTime() - new Date(r.start_date).getTime()) / (1000 * 60 * 60 * 24)) + 1;
+                      const fmt = (d: string) => {
+                        const dt = new Date(d);
+                        return `${dt.getFullYear().toString().slice(-2)}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`;
+                      };
+                      return (
+                        <div key={r.id} className="rounded-lg border p-3 space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-medium text-foreground">{fmt(r.start_date)} → {fmt(r.end_date)}</span>
+                            <StatusBadge status={getDisplayStatus(r.leader_status, r.status)} />
+                          </div>
+                          <p className="text-xs text-muted-foreground">{days} day{days > 1 ? 's' : ''} — {r.reason}</p>
+                          {(r.leader_comment || r.admin_comment) && (
+                            <p className="text-xs text-muted-foreground italic">
+                              {r.leader_comment && `Leader: ${r.leader_comment}`}
+                              {r.leader_comment && r.admin_comment && ' · '}
+                              {r.admin_comment && `HR: ${r.admin_comment}`}
+                            </p>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                  {/* Desktop table view */}
+                  <Table className="hidden sm:table">
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Start</TableHead>
-                        <TableHead>End</TableHead>
-                        <TableHead>Days</TableHead>
-                      <TableHead className="hidden sm:table-cell">Reason</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead className="hidden sm:table-cell">Leader</TableHead>
-                      <TableHead className="hidden sm:table-cell">HR</TableHead>
+                        <TableHead className="text-xs">Start</TableHead>
+                        <TableHead className="text-xs">End</TableHead>
+                        <TableHead className="text-xs">Days</TableHead>
+                        <TableHead className="text-xs">Reason</TableHead>
+                        <TableHead className="text-xs">Status</TableHead>
+                        <TableHead className="text-xs">Leader</TableHead>
+                        <TableHead className="text-xs">HR</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {requests.map((r) => (
                         <TableRow key={r.id}>
-                          <TableCell className="whitespace-nowrap">{new Date(r.start_date).getFullYear().toString().slice(-2)}-{String(new Date(r.start_date).getMonth() + 1).padStart(2, '0')}-{String(new Date(r.start_date).getDate()).padStart(2, '0')}</TableCell>
-                          <TableCell className="whitespace-nowrap">{new Date(r.end_date).getFullYear().toString().slice(-2)}-{String(new Date(r.end_date).getMonth() + 1).padStart(2, '0')}-{String(new Date(r.end_date).getDate()).padStart(2, '0')}</TableCell>
-                          <TableCell className="whitespace-nowrap">
+                          <TableCell className="whitespace-nowrap text-xs">{new Date(r.start_date).getFullYear().toString().slice(-2)}-{String(new Date(r.start_date).getMonth() + 1).padStart(2, '0')}-{String(new Date(r.start_date).getDate()).padStart(2, '0')}</TableCell>
+                          <TableCell className="whitespace-nowrap text-xs">{new Date(r.end_date).getFullYear().toString().slice(-2)}-{String(new Date(r.end_date).getMonth() + 1).padStart(2, '0')}-{String(new Date(r.end_date).getDate()).padStart(2, '0')}</TableCell>
+                          <TableCell className="text-xs">
                             {Math.ceil((new Date(r.end_date).getTime() - new Date(r.start_date).getTime()) / (1000 * 60 * 60 * 24)) + 1}
                           </TableCell>
-                        <TableCell className="hidden sm:table-cell max-w-[120px] truncate">{r.reason}</TableCell>
-                        <TableCell>
-                          <StatusBadge status={getDisplayStatus(r.leader_status, r.status)} />
-                          <p className="text-xs text-muted-foreground sm:hidden">
-                            {r.leader_comment || r.admin_comment || ""}
-                          </p>
-                        </TableCell>
-                        <TableCell className="hidden sm:table-cell text-sm text-muted-foreground">
-                          {r.leader_comment || "—"}
-                        </TableCell>
-                        <TableCell className="hidden sm:table-cell text-sm text-muted-foreground">
-                            {r.admin_comment || "—"}
-                          </TableCell>
+                          <TableCell className="max-w-[120px] truncate text-xs">{r.reason}</TableCell>
+                          <TableCell><StatusBadge status={getDisplayStatus(r.leader_status, r.status)} /></TableCell>
+                          <TableCell className="text-xs text-muted-foreground">{r.leader_comment || "—"}</TableCell>
+                          <TableCell className="text-xs text-muted-foreground">{r.admin_comment || "—"}</TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
