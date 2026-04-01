@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Clock, CheckCircle2, XCircle, LayoutDashboard, MessageSquare, TrendingUp } from "lucide-react";
+import { Loader2, Clock, CheckCircle2, XCircle, LayoutDashboard, MessageSquare, TrendingUp, Users } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -25,6 +25,19 @@ export default function AdminDashboard() {
   const [selectedYear, setSelectedYear] = useState(String(currentYear));
   const [selectedMonth, setSelectedMonth] = useState("all");
   const [analyticsView, setAnalyticsView] = useState<AnalyticsView>("yearly");
+
+  // Fetch leader user IDs
+  const { data: leaderUserIds } = useQuery({
+    queryKey: ["leader-user-ids"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("user_roles")
+        .select("user_id")
+        .eq("role", "department_leader");
+      if (error) throw error;
+      return new Set(data.map((r) => r.user_id));
+    },
+  });
 
   const { data: requests, isLoading } = useQuery({
     queryKey: ["all-leaves"],
@@ -46,7 +59,7 @@ export default function AdminDashboard() {
       const profileMap = new Map(profiles.map((p) => [p.user_id, p]));
       return leaves.map((l) => ({ ...l, profile: profileMap.get(l.user_id) || null }));
     },
-    refetchInterval: 10000, // Live polling every 10s
+    refetchInterval: 10000,
   });
 
   const updateMutation = useMutation({
@@ -70,13 +83,24 @@ export default function AdminDashboard() {
 
   const [comments, setComments] = useState<Record<string, string>>({});
 
-  const total = requests?.length ?? 0;
-  const pending = requests?.filter((r) => r.status === "Pending").length ?? 0;
-  const approved = requests?.filter((r) => r.status === "Approved").length ?? 0;
-  const rejected = requests?.filter((r) => r.status === "Rejected").length ?? 0;
+  // Separate staff requests from leader requests
+  const staffRequests = useMemo(() => {
+    if (!requests || !leaderUserIds) return requests ?? [];
+    return requests.filter((r) => !leaderUserIds.has(r.user_id));
+  }, [requests, leaderUserIds]);
 
-  const readyForHR = requests?.filter((r) => r.leader_status !== "Pending" && r.status === "Pending") ?? [];
-  const pendingLeader = requests?.filter((r) => r.leader_status === "Pending") ?? [];
+  const leaderLeaveRequests = useMemo(() => {
+    if (!requests || !leaderUserIds) return [];
+    return requests.filter((r) => leaderUserIds.has(r.user_id));
+  }, [requests, leaderUserIds]);
+
+  const total = staffRequests.length;
+  const pending = staffRequests.filter((r) => r.status === "Pending").length;
+  const approved = staffRequests.filter((r) => r.status === "Approved").length;
+  const rejected = staffRequests.filter((r) => r.status === "Rejected").length;
+
+  const readyForHR = staffRequests.filter((r) => r.leader_status !== "Pending" && r.status === "Pending");
+  const pendingLeader = staffRequests.filter((r) => r.leader_status === "Pending");
 
   const stats = [
     { label: "Total", value: total, icon: LayoutDashboard, color: "text-primary" },
@@ -194,15 +218,6 @@ export default function AdminDashboard() {
     }));
   }, [requests, selectedYear]);
 
-  // Leader leave requests (view-only for admin)
-  const leaderRequests = useMemo(() => {
-    if (!requests) return [];
-    return requests.filter((r) => {
-      const profile = r.profile as any;
-      // We check if cce_status exists (leader requests have it)
-      return r.cce_status !== undefined && r.cce_status !== "N/A";
-    });
-  }, [requests]);
 
   const chartData = analyticsView === "weekly" ? weeklyData : (dailyData || monthlyData);
   const xKey = analyticsView === "weekly" ? "week" : (dailyData ? "day" : "month");
@@ -318,6 +333,49 @@ export default function AdminDashboard() {
     </div>
   );
 
+  const renderLeaderRequestTable = (data: typeof leaderLeaveRequests) => (
+    <div className="overflow-x-auto">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Leader</TableHead>
+            <TableHead className="hidden sm:table-cell">Department</TableHead>
+            <TableHead>Start</TableHead>
+            <TableHead>End</TableHead>
+            <TableHead>Days</TableHead>
+            <TableHead className="hidden sm:table-cell">Reason</TableHead>
+            <TableHead>CCE Decision</TableHead>
+            <TableHead className="hidden sm:table-cell">CCE Comment</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {data?.map((r) => {
+            const profile = r.profile as any;
+            return (
+              <TableRow key={r.id}>
+                <TableCell>
+                  <div>
+                    <p className="font-medium">{profile?.name || "—"}</p>
+                    <p className="text-xs text-muted-foreground sm:hidden">{profile?.department || "—"}</p>
+                  </div>
+                </TableCell>
+                <TableCell className="hidden sm:table-cell whitespace-nowrap text-sm">{profile?.department || "—"}</TableCell>
+                <TableCell className="whitespace-nowrap">{r.start_date}</TableCell>
+                <TableCell className="whitespace-nowrap">{r.end_date}</TableCell>
+                <TableCell className="whitespace-nowrap">
+                  {Math.ceil((new Date(r.end_date).getTime() - new Date(r.start_date).getTime()) / (1000 * 60 * 60 * 24)) + 1}
+                </TableCell>
+                <TableCell className="hidden sm:table-cell max-w-[180px] truncate">{r.reason}</TableCell>
+                <TableCell><StatusBadge status={r.cce_status === "N/A" ? "Pending CCE" : r.cce_status} /></TableCell>
+                <TableCell className="hidden sm:table-cell text-sm text-muted-foreground">{r.cce_comment || "—"}</TableCell>
+              </TableRow>
+            );
+          })}
+        </TableBody>
+      </Table>
+    </div>
+  );
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
@@ -386,19 +444,42 @@ export default function AdminDashboard() {
             </AccordionItem>
 
             <AccordionItem value="all">
-              <AccordionTrigger>All Requests ({total})</AccordionTrigger>
+              <AccordionTrigger>All Staff Requests ({total})</AccordionTrigger>
               <AccordionContent>
                 <Card className="animate-fade-in">
                   <CardHeader>
-                    <CardTitle className="font-display text-lg text-primary font-montserrat">All Leave Requests</CardTitle>
+                    <CardTitle className="font-display text-lg text-primary font-montserrat">All Staff Leave Requests</CardTitle>
                   </CardHeader>
                   <CardContent>
                     {isLoading ? (
                       <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
-                    ) : requests && requests.length > 0 ? (
-                      renderRequestTable(requests, true, true)
+                    ) : staffRequests.length > 0 ? (
+                      renderRequestTable(staffRequests, true, true)
                     ) : (
                       <p className="py-8 text-center text-muted-foreground">No leave requests found.</p>
+                    )}
+                  </CardContent>
+                </Card>
+              </AccordionContent>
+            </AccordionItem>
+
+            <AccordionItem value="leader-requests">
+              <AccordionTrigger>Leader Requests ({leaderLeaveRequests.length})</AccordionTrigger>
+              <AccordionContent>
+                <Card className="animate-fade-in">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 font-display text-lg text-primary font-montserrat">
+                      <Users className="h-5 w-5" /> Department Leader Leave Requests
+                    </CardTitle>
+                    <p className="text-xs text-muted-foreground">View only — CCE handles approvals for leader requests</p>
+                  </CardHeader>
+                  <CardContent>
+                    {isLoading ? (
+                      <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
+                    ) : leaderLeaveRequests.length > 0 ? (
+                      renderLeaderRequestTable(leaderLeaveRequests)
+                    ) : (
+                      <p className="py-8 text-center text-muted-foreground">No leader leave requests.</p>
                     )}
                   </CardContent>
                 </Card>
@@ -587,7 +668,11 @@ export default function AdminDashboard() {
             <TabsList>
               <TabsTrigger value="pending">Ready for HR Review ({readyForHR.length})</TabsTrigger>
               <TabsTrigger value="awaiting">Awaiting Leader ({pendingLeader.length})</TabsTrigger>
-              <TabsTrigger value="all">All Requests ({total})</TabsTrigger>
+              <TabsTrigger value="all">All Staff ({total})</TabsTrigger>
+              <TabsTrigger value="leader-requests">
+                <Users className="mr-1 h-4 w-4" />
+                Leader Requests ({leaderLeaveRequests.length})
+              </TabsTrigger>
               <TabsTrigger value="analytics">
                 <TrendingUp className="mr-1 h-4 w-4" />
                 Analytics
@@ -631,15 +716,35 @@ export default function AdminDashboard() {
             <TabsContent value="all">
               <Card className="animate-fade-in">
                 <CardHeader>
-                  <CardTitle className="font-display text-lg text-primary font-montserrat">All Leave Requests</CardTitle>
+                  <CardTitle className="font-display text-lg text-primary font-montserrat">All Staff Leave Requests</CardTitle>
                 </CardHeader>
                 <CardContent>
                   {isLoading ? (
                     <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
-                  ) : requests && requests.length > 0 ? (
-                    renderRequestTable(requests, true, true)
+                  ) : staffRequests.length > 0 ? (
+                    renderRequestTable(staffRequests, true, true)
                   ) : (
                     <p className="py-8 text-center text-muted-foreground">No leave requests found.</p>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="leader-requests">
+              <Card className="animate-fade-in">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 font-display text-lg text-primary font-montserrat">
+                    <Users className="h-5 w-5" /> Department Leader Leave Requests
+                  </CardTitle>
+                  <p className="text-sm text-muted-foreground">View only — CCE handles approvals for leader requests</p>
+                </CardHeader>
+                <CardContent>
+                  {isLoading ? (
+                    <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
+                  ) : leaderLeaveRequests.length > 0 ? (
+                    renderLeaderRequestTable(leaderLeaveRequests)
+                  ) : (
+                    <p className="py-8 text-center text-muted-foreground">No leader leave requests.</p>
                   )}
                 </CardContent>
               </Card>
