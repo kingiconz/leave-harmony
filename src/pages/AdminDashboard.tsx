@@ -271,7 +271,7 @@ export default function AdminDashboard() {
                 <TableCell className="whitespace-nowrap">
                   {Math.ceil((new Date(r.end_date).getTime() - new Date(r.start_date).getTime()) / (1000 * 60 * 60 * 24)) + 1}
                 </TableCell>
-                <TableCell className="hidden sm:table-cell max-w-[180px] truncate">{r.reason}</TableCell>
+                <TableCell className="hidden sm:table-cell text-sm break-words whitespace-normal">{r.reason}</TableCell>
                 {showLeaderStatus && <TableCell><StatusBadge status={r.leader_status} /></TableCell>}
                 {showLeaderStatus && <TableCell className="hidden sm:table-cell text-sm text-muted-foreground">{r.leader_comment || "—"}</TableCell>}
                 <TableCell><StatusBadge status={r.status} /></TableCell>
@@ -365,7 +365,7 @@ export default function AdminDashboard() {
                 <TableCell className="whitespace-nowrap">
                   {Math.ceil((new Date(r.end_date).getTime() - new Date(r.start_date).getTime()) / (1000 * 60 * 60 * 24)) + 1}
                 </TableCell>
-                <TableCell className="hidden sm:table-cell max-w-[180px] truncate">{r.reason}</TableCell>
+                <TableCell className="hidden sm:table-cell text-sm break-words whitespace-normal">{r.reason}</TableCell>
                 <TableCell><StatusBadge status={r.cce_status === "N/A" ? "Pending CCE" : r.cce_status} /></TableCell>
                 <TableCell className="hidden sm:table-cell text-sm text-muted-foreground">{r.cce_comment || "—"}</TableCell>
               </TableRow>

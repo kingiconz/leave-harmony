@@ -168,7 +168,7 @@ export default function LeaderDashboard() {
                 <TableCell className="whitespace-nowrap">{formatDate(r.start_date)}</TableCell>
                 <TableCell className="whitespace-nowrap">{formatDate(r.end_date)}</TableCell>
                 <TableCell className="hidden sm:table-cell">{days}</TableCell>
-                <TableCell className="hidden md:table-cell max-w-[120px] truncate">{r.reason}</TableCell>
+                <TableCell className="hidden md:table-cell text-sm break-words whitespace-normal">{r.reason}</TableCell>
                 <TableCell><StatusBadge status={r.leader_status} /></TableCell>
                 <TableCell className="hidden sm:table-cell">
                   <div className="flex items-center gap-1 min-w-[120px]">
@@ -406,7 +406,7 @@ export default function LeaderDashboard() {
                                 <TableCell className="whitespace-nowrap">{formatDate(r.start_date)}</TableCell>
                                 <TableCell className="whitespace-nowrap">{formatDate(r.end_date)}</TableCell>
                                 <TableCell>{Math.ceil((new Date(r.end_date).getTime() - new Date(r.start_date).getTime()) / (1000 * 60 * 60 * 24)) + 1}</TableCell>
-                                <TableCell className="hidden sm:table-cell max-w-[120px] truncate">{r.reason}</TableCell>
+                                <TableCell className="hidden sm:table-cell text-sm break-words whitespace-normal">{r.reason}</TableCell>
                                 <TableCell><StatusBadge status={getDisplayStatus(r.cce_status)} /></TableCell>
                                 <TableCell className="hidden sm:table-cell text-sm text-muted-foreground">{r.cce_comment || "—"}</TableCell>
                               </TableRow>

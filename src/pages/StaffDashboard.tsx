@@ -168,7 +168,7 @@ export default function StaffDashboard() {
                           <TableCell className="text-xs">
                             {Math.ceil((new Date(r.end_date).getTime() - new Date(r.start_date).getTime()) / (1000 * 60 * 60 * 24)) + 1}
                           </TableCell>
-                          <TableCell className="max-w-[120px] truncate text-xs">{r.reason}</TableCell>
+                          <TableCell className="text-xs break-words whitespace-normal">{r.reason}</TableCell>
                           <TableCell><StatusBadge status={getDisplayStatus(r.leader_status, r.status)} /></TableCell>
                           <TableCell className="text-xs text-muted-foreground">{r.leader_comment || "—"}</TableCell>
                           <TableCell className="text-xs text-muted-foreground">{r.admin_comment || "—"}</TableCell>
