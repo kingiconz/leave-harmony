@@ -26,6 +26,7 @@ export type Database = {
           leader_request_decided_by: string
           leader_status: string
           reason: string
+          staff_request_decided_by: string
           start_date: string
           status: string
           user_id: string
@@ -41,6 +42,7 @@ export type Database = {
           leader_request_decided_by?: string
           leader_status?: string
           reason?: string
+          staff_request_decided_by?: string
           start_date: string
           status?: string
           user_id: string
@@ -56,6 +58,7 @@ export type Database = {
           leader_request_decided_by?: string
           leader_status?: string
           reason?: string
+          staff_request_decided_by?: string
           start_date?: string
           status?: string
           user_id?: string

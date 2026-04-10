@@ -1,0 +1,1 @@
+ALTER TABLE public.leave_requests ADD COLUMN staff_request_decided_by text NOT NULL DEFAULT '';

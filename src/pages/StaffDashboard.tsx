@@ -136,6 +136,9 @@ export default function StaffDashboard() {
                             <StatusBadge status={getDisplayStatus(r.leader_status, r.status)} />
                           </div>
                           <p className="text-xs text-muted-foreground">{days} day{days > 1 ? 's' : ''} — {r.reason}</p>
+                          {r.status !== "Pending" && (r as any).staff_request_decided_by && (
+                            <p className="text-xs text-muted-foreground font-medium">Decided by: {(r as any).staff_request_decided_by}</p>
+                          )}
                           {(r.leader_comment || r.admin_comment) && (
                             <p className="text-xs text-muted-foreground italic">
                               {r.leader_comment && `Leader: ${r.leader_comment}`}
@@ -151,27 +154,29 @@ export default function StaffDashboard() {
                   <Table className="hidden sm:table">
                     <TableHeader>
                       <TableRow>
-                        <TableHead className="text-xs">Start</TableHead>
-                        <TableHead className="text-xs">End</TableHead>
-                        <TableHead className="text-xs">Days</TableHead>
-                        <TableHead className="text-xs">Reason</TableHead>
-                        <TableHead className="text-xs">Status</TableHead>
-                        <TableHead className="text-xs">Leader</TableHead>
-                        <TableHead className="text-xs">HR</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {requests.map((r) => (
-                        <TableRow key={r.id}>
-                          <TableCell className="whitespace-nowrap text-xs">{new Date(r.start_date).getFullYear().toString().slice(-2)}-{String(new Date(r.start_date).getMonth() + 1).padStart(2, '0')}-{String(new Date(r.start_date).getDate()).padStart(2, '0')}</TableCell>
-                          <TableCell className="whitespace-nowrap text-xs">{new Date(r.end_date).getFullYear().toString().slice(-2)}-{String(new Date(r.end_date).getMonth() + 1).padStart(2, '0')}-{String(new Date(r.end_date).getDate()).padStart(2, '0')}</TableCell>
-                          <TableCell className="text-xs">
-                            {Math.ceil((new Date(r.end_date).getTime() - new Date(r.start_date).getTime()) / (1000 * 60 * 60 * 24)) + 1}
-                          </TableCell>
-                          <TableCell className="text-xs break-words whitespace-normal">{r.reason}</TableCell>
-                          <TableCell><StatusBadge status={getDisplayStatus(r.leader_status, r.status)} /></TableCell>
-                          <TableCell className="text-xs text-muted-foreground">{r.leader_comment || "—"}</TableCell>
-                          <TableCell className="text-xs text-muted-foreground">{r.admin_comment || "—"}</TableCell>
+                         <TableHead className="text-xs">Start</TableHead>
+                         <TableHead className="text-xs">End</TableHead>
+                         <TableHead className="text-xs">Days</TableHead>
+                         <TableHead className="text-xs">Reason</TableHead>
+                         <TableHead className="text-xs">Status</TableHead>
+                         <TableHead className="text-xs">Decided By</TableHead>
+                         <TableHead className="text-xs">Leader</TableHead>
+                         <TableHead className="text-xs">HR</TableHead>
+                       </TableRow>
+                     </TableHeader>
+                     <TableBody>
+                       {requests.map((r) => (
+                         <TableRow key={r.id}>
+                           <TableCell className="whitespace-nowrap text-xs">{new Date(r.start_date).getFullYear().toString().slice(-2)}-{String(new Date(r.start_date).getMonth() + 1).padStart(2, '0')}-{String(new Date(r.start_date).getDate()).padStart(2, '0')}</TableCell>
+                           <TableCell className="whitespace-nowrap text-xs">{new Date(r.end_date).getFullYear().toString().slice(-2)}-{String(new Date(r.end_date).getMonth() + 1).padStart(2, '0')}-{String(new Date(r.end_date).getDate()).padStart(2, '0')}</TableCell>
+                           <TableCell className="text-xs">
+                             {Math.ceil((new Date(r.end_date).getTime() - new Date(r.start_date).getTime()) / (1000 * 60 * 60 * 24)) + 1}
+                           </TableCell>
+                           <TableCell className="text-xs break-words whitespace-normal">{r.reason}</TableCell>
+                           <TableCell><StatusBadge status={getDisplayStatus(r.leader_status, r.status)} /></TableCell>
+                           <TableCell className="text-xs text-muted-foreground">{r.status === "Pending" ? "—" : ((r as any).staff_request_decided_by || "—")}</TableCell>
+                           <TableCell className="text-xs text-muted-foreground">{r.leader_comment || "—"}</TableCell>
+                           <TableCell className="text-xs text-muted-foreground">{r.admin_comment || "—"}</TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
