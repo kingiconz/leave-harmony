@@ -66,6 +66,9 @@ export default function AdminDashboard() {
     mutationFn: async ({ id, status, admin_comment }: { id: string; status: string; admin_comment?: string }) => {
       const updateData: Record<string, string> = { status };
       if (admin_comment !== undefined) updateData.admin_comment = admin_comment;
+      if (status === "Approved" || status === "Rejected") {
+        updateData.staff_request_decided_by = "Admin";
+      }
       const { error } = await supabase
         .from("leave_requests")
         .update(updateData)
@@ -270,6 +273,7 @@ export default function AdminDashboard() {
             {showLeaderStatus && <TableHead>Leader Decision</TableHead>}
             {showLeaderStatus && <TableHead className="hidden sm:table-cell">Leader Comment</TableHead>}
             <TableHead>HR Status</TableHead>
+            <TableHead className="hidden sm:table-cell">Decided By</TableHead>
             <TableHead className="hidden sm:table-cell">HR Comment</TableHead>
             {canAct && <TableHead className="hidden sm:table-cell">Actions</TableHead>}
           </TableRow>
@@ -295,6 +299,9 @@ export default function AdminDashboard() {
                 {showLeaderStatus && <TableCell><StatusBadge status={r.leader_status} /></TableCell>}
                 {showLeaderStatus && <TableCell className="hidden sm:table-cell text-sm text-muted-foreground">{r.leader_comment || "—"}</TableCell>}
                 <TableCell><StatusBadge status={r.status} /></TableCell>
+                <TableCell className="hidden sm:table-cell text-sm text-muted-foreground">
+                  {r.status === "Pending" ? "—" : ((r as any).staff_request_decided_by || "—")}
+                </TableCell>
                 <TableCell className="hidden sm:table-cell">
                   <div className="flex items-center gap-1 min-w-[180px]">
                     <Input
