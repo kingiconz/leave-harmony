@@ -103,6 +103,7 @@ export default function CCEDashboard() {
             <TableHead className="hidden sm:table-cell">Days</TableHead>
             <TableHead className="hidden md:table-cell">Reason</TableHead>
             <TableHead>Status</TableHead>
+            <TableHead className="hidden sm:table-cell">Decided By</TableHead>
             <TableHead className="hidden sm:table-cell">Comment</TableHead>
             {canAct && <TableHead className="hidden sm:table-cell">Actions</TableHead>}
           </TableRow>
@@ -125,6 +126,9 @@ export default function CCEDashboard() {
                 <TableCell className="hidden sm:table-cell">{days}</TableCell>
                 <TableCell className="hidden md:table-cell text-sm break-words whitespace-normal">{r.reason}</TableCell>
                 <TableCell><StatusBadge status={r.cce_status === "N/A" ? "Pending" : r.cce_status} /></TableCell>
+                <TableCell className="hidden sm:table-cell text-sm text-muted-foreground">
+                  {(r.cce_status === "N/A" || r.cce_status === "Pending") ? "—" : (r as any).leader_request_decided_by || "—"}
+                </TableCell>
                 <TableCell className="hidden sm:table-cell">
                   <div className="flex items-center gap-1 min-w-[120px]">
                     <Input
