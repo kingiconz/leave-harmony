@@ -93,6 +93,11 @@ export default function LeaderDashboard() {
     mutationFn: async ({ id, leader_status, leader_comment }: { id: string; leader_status: string; leader_comment?: string }) => {
       const updateData: Record<string, string> = { leader_status };
       if (leader_comment !== undefined) updateData.leader_comment = leader_comment;
+      // When leader approves/rejects, also set final status and track who decided
+      if (leader_status === "Approved" || leader_status === "Rejected") {
+        updateData.status = leader_status;
+        updateData.staff_request_decided_by = "Department Leader";
+      }
       const { error } = await supabase
         .from("leave_requests")
         .update(updateData)
@@ -149,6 +154,7 @@ export default function LeaderDashboard() {
             <TableHead className="hidden sm:table-cell">Days</TableHead>
             <TableHead className="hidden md:table-cell">Reason</TableHead>
             <TableHead>Status</TableHead>
+            <TableHead className="hidden sm:table-cell">Decided By</TableHead>
             <TableHead className="hidden sm:table-cell">Comment</TableHead>
             <TableHead className="hidden sm:table-cell">Actions</TableHead>
           </TableRow>
@@ -170,6 +176,9 @@ export default function LeaderDashboard() {
                 <TableCell className="hidden sm:table-cell">{days}</TableCell>
                 <TableCell className="hidden md:table-cell text-sm break-words whitespace-normal">{r.reason}</TableCell>
                 <TableCell><StatusBadge status={r.leader_status} /></TableCell>
+                <TableCell className="hidden sm:table-cell text-sm text-muted-foreground">
+                  {r.leader_status === "Pending" ? "—" : ((r as any).staff_request_decided_by || "—")}
+                </TableCell>
                 <TableCell className="hidden sm:table-cell">
                   <div className="flex items-center gap-1 min-w-[120px]">
                     <Input
