@@ -122,8 +122,8 @@ export default function AdminDashboard() {
   const approved = staffRequests.filter((r) => r.status === "Approved").length;
   const rejected = staffRequests.filter((r) => r.status === "Rejected").length;
 
-  const readyForHR = staffRequests.filter((r) => r.leader_status !== "Pending" && r.status === "Pending");
-  const pendingLeader = staffRequests.filter((r) => r.leader_status === "Pending");
+  const readyForHR = staffRequests.filter((r) => r.status === "Pending");
+  const pendingLeader = staffRequests.filter((r) => r.leader_status === "Pending" && r.status === "Pending");
 
   const stats = [
     { label: "Total", value: total, icon: LayoutDashboard, color: "text-primary" },
