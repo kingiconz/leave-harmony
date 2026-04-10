@@ -136,6 +136,9 @@ export default function StaffDashboard() {
                             <StatusBadge status={getDisplayStatus(r.leader_status, r.status)} />
                           </div>
                           <p className="text-xs text-muted-foreground">{days} day{days > 1 ? 's' : ''} — {r.reason}</p>
+                          {r.status !== "Pending" && (r as any).staff_request_decided_by && (
+                            <p className="text-xs text-muted-foreground font-medium">Decided by: {(r as any).staff_request_decided_by}</p>
+                          )}
                           {(r.leader_comment || r.admin_comment) && (
                             <p className="text-xs text-muted-foreground italic">
                               {r.leader_comment && `Leader: ${r.leader_comment}`}
