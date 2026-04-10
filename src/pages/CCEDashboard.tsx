@@ -54,7 +54,7 @@ export default function CCEDashboard() {
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, cce_status, cce_comment }: { id: string; cce_status: string; cce_comment?: string }) => {
-      const updateData: Record<string, string> = { cce_status };
+      const updateData: Record<string, string> = { cce_status, leader_request_decided_by: "CCE" };
       if (cce_comment !== undefined) updateData.cce_comment = cce_comment;
       const { error } = await supabase
         .from("leave_requests")
