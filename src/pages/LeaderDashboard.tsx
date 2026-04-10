@@ -397,6 +397,7 @@ export default function LeaderDashboard() {
                               <TableHead>Days</TableHead>
                               <TableHead className="hidden sm:table-cell">Reason</TableHead>
                               <TableHead>CCE Status</TableHead>
+                              <TableHead className="hidden sm:table-cell">Decided By</TableHead>
                               <TableHead className="hidden sm:table-cell">CCE Comment</TableHead>
                             </TableRow>
                           </TableHeader>
@@ -408,6 +409,9 @@ export default function LeaderDashboard() {
                                 <TableCell>{Math.ceil((new Date(r.end_date).getTime() - new Date(r.start_date).getTime()) / (1000 * 60 * 60 * 24)) + 1}</TableCell>
                                 <TableCell className="hidden sm:table-cell text-sm break-words whitespace-normal">{r.reason}</TableCell>
                                 <TableCell><StatusBadge status={getDisplayStatus(r.cce_status)} /></TableCell>
+                                <TableCell className="hidden sm:table-cell text-sm text-muted-foreground">
+                                  {(r.cce_status === "N/A" || r.cce_status === "Pending") ? "—" : (r as any).leader_request_decided_by || "—"}
+                                </TableCell>
                                 <TableCell className="hidden sm:table-cell text-sm text-muted-foreground">{r.cce_comment || "—"}</TableCell>
                               </TableRow>
                             ))}
