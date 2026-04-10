@@ -23,6 +23,7 @@ export type Database = {
           end_date: string
           id: string
           leader_comment: string
+          leader_request_decided_by: string
           leader_status: string
           reason: string
           start_date: string
@@ -37,6 +38,7 @@ export type Database = {
           end_date: string
           id?: string
           leader_comment?: string
+          leader_request_decided_by?: string
           leader_status?: string
           reason?: string
           start_date: string
@@ -51,6 +53,7 @@ export type Database = {
           end_date?: string
           id?: string
           leader_comment?: string
+          leader_request_decided_by?: string
           leader_status?: string
           reason?: string
           start_date?: string

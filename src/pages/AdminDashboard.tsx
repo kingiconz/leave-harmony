@@ -81,6 +81,26 @@ export default function AdminDashboard() {
     },
   });
 
+  // Mutation for admin to approve/reject leader leave requests
+  const leaderUpdateMutation = useMutation({
+    mutationFn: async ({ id, cce_status, admin_comment }: { id: string; cce_status: string; admin_comment?: string }) => {
+      const updateData: Record<string, string> = { cce_status, leader_request_decided_by: "Admin" };
+      if (admin_comment !== undefined) updateData.admin_comment = admin_comment;
+      const { error } = await supabase
+        .from("leave_requests")
+        .update(updateData)
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["all-leaves"] });
+      toast({ title: "Leader request updated!" });
+    },
+    onError: (err: any) => {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    },
+  });
+
   const [comments, setComments] = useState<Record<string, string>>({});
 
   // Separate staff requests from leader requests
@@ -344,13 +364,16 @@ export default function AdminDashboard() {
             <TableHead>End</TableHead>
             <TableHead>Days</TableHead>
             <TableHead className="hidden sm:table-cell">Reason</TableHead>
-            <TableHead>CCE Decision</TableHead>
-            <TableHead className="hidden sm:table-cell">CCE Comment</TableHead>
+            <TableHead>Decision</TableHead>
+            <TableHead className="hidden sm:table-cell">Decided By</TableHead>
+            <TableHead className="hidden sm:table-cell">Comment</TableHead>
+            <TableHead className="hidden sm:table-cell">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {data?.map((r) => {
             const profile = r.profile as any;
+            const isPending = r.cce_status === "N/A" || r.cce_status === "Pending";
             return (
               <TableRow key={r.id}>
                 <TableCell>
@@ -366,8 +389,44 @@ export default function AdminDashboard() {
                   {Math.ceil((new Date(r.end_date).getTime() - new Date(r.start_date).getTime()) / (1000 * 60 * 60 * 24)) + 1}
                 </TableCell>
                 <TableCell className="hidden sm:table-cell text-sm break-words whitespace-normal">{r.reason}</TableCell>
-                <TableCell><StatusBadge status={r.cce_status === "N/A" ? "Pending CCE" : r.cce_status} /></TableCell>
-                <TableCell className="hidden sm:table-cell text-sm text-muted-foreground">{r.cce_comment || "—"}</TableCell>
+                <TableCell><StatusBadge status={isPending ? "Pending" : r.cce_status} /></TableCell>
+                <TableCell className="hidden sm:table-cell text-sm text-muted-foreground">
+                  {isPending ? "—" : (r as any).leader_request_decided_by || "—"}
+                </TableCell>
+                <TableCell className="hidden sm:table-cell">
+                  <div className="flex items-center gap-1 min-w-[120px]">
+                    <Input
+                      placeholder="Comment..."
+                      value={comments[r.id] ?? r.admin_comment ?? ""}
+                      onChange={(e) => setComments((prev) => ({ ...prev, [r.id]: e.target.value }))}
+                      className="h-8 text-xs"
+                    />
+                    <Button size="sm" variant="ghost" className="h-8 px-2" disabled={leaderUpdateMutation.isPending}
+                      onClick={() => {
+                        const comment = comments[r.id] ?? r.admin_comment ?? "";
+                        leaderUpdateMutation.mutate({ id: r.id, cce_status: r.cce_status, admin_comment: comment });
+                      }}
+                    >
+                      <MessageSquare className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </TableCell>
+                <TableCell className="hidden sm:table-cell">
+                  {isPending ? (
+                    <div className="flex gap-2">
+                      <Button size="sm" variant="outline" className="border-success/40 text-success hover:bg-success/10"
+                        onClick={() => leaderUpdateMutation.mutate({ id: r.id, cce_status: "Approved", admin_comment: comments[r.id] ?? r.admin_comment })}
+                        disabled={leaderUpdateMutation.isPending}
+                      >Approve</Button>
+                      <Button size="sm" variant="outline" className="border-destructive/40 text-destructive hover:bg-destructive/10"
+                        onClick={() => leaderUpdateMutation.mutate({ id: r.id, cce_status: "Rejected", admin_comment: comments[r.id] ?? r.admin_comment })}
+                        disabled={leaderUpdateMutation.isPending}
+                      >Reject</Button>
+                    </div>
+                  ) : (
+                    <span className="text-xs text-muted-foreground">Reviewed</span>
+                  )}
+                </TableCell>
               </TableRow>
             );
           })}
@@ -736,7 +795,7 @@ export default function AdminDashboard() {
                   <CardTitle className="flex items-center gap-2 font-display text-lg text-primary font-montserrat">
                     <Users className="h-5 w-5" /> Department Leader Leave Requests
                   </CardTitle>
-                  <p className="text-sm text-muted-foreground">View only — CCE handles approvals for leader requests</p>
+                  <p className="text-sm text-muted-foreground">Both Admin and CCE can approve or reject leader leave requests</p>
                 </CardHeader>
                 <CardContent>
                   {isLoading ? (
