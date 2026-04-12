@@ -14,9 +14,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 function getDisplayStatus(leaderStatus: string, hrStatus: string): string {
+  // HR decision is final — if HR has decided, show that status
+  if (hrStatus === "Approved" || hrStatus === "Rejected") return hrStatus;
+  // Otherwise still pending HR review (regardless of leader status)
   if (leaderStatus === "Pending") return "Pending Leader Review";
-  if (hrStatus === "Pending") return "Pending HR Review";
-  return hrStatus; // Final decision
+  return "Pending HR Review";
 }
 
 export default function StaffDashboard() {

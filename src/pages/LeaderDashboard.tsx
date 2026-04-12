@@ -93,11 +93,6 @@ export default function LeaderDashboard() {
     mutationFn: async ({ id, leader_status, leader_comment }: { id: string; leader_status: string; leader_comment?: string }) => {
       const updateData: Record<string, string> = { leader_status };
       if (leader_comment !== undefined) updateData.leader_comment = leader_comment;
-      // When leader approves/rejects, also set final status and track who decided
-      if (leader_status === "Approved" || leader_status === "Rejected") {
-        updateData.status = leader_status;
-        updateData.staff_request_decided_by = "Department Leader";
-      }
       const { error } = await supabase
         .from("leave_requests")
         .update(updateData)
