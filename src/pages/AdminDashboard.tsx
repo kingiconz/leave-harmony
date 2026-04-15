@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { useAuth } from "@/context/AuthContext";
 import Navbar from "@/components/Navbar";
 import StatusBadge from "@/components/StatusBadge";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
@@ -19,12 +20,30 @@ const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Se
 type AnalyticsView = "yearly" | "weekly" | "monthly";
 
 export default function AdminDashboard() {
+  const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const currentYear = new Date().getFullYear();
   const [selectedYear, setSelectedYear] = useState(String(currentYear));
   const [selectedMonth, setSelectedMonth] = useState("all");
   const [analyticsView, setAnalyticsView] = useState<AnalyticsView>("yearly");
+
+  // Fetch current admin's profile name
+  const { data: adminProfile } = useQuery({
+    queryKey: ["admin-profile", user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("name")
+        .eq("user_id", user!.id)
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user,
+  });
+
+  const adminName = adminProfile?.name || "Admin";
 
   // Fetch leader user IDs
   const { data: leaderUserIds } = useQuery({
