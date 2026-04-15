@@ -96,6 +96,11 @@ export default function LeaderLogin() {
               {isRegister ? "Register" : "Sign In"}
             </Button>
           </form>
+          {!isRegister && (
+            <div className="mt-2 text-center">
+              <button onClick={() => navigate("/forgot-password")} className="text-sm text-primary hover:underline">Forgot password?</button>
+            </div>
+          )}
           <div className="mt-4 text-center text-sm text-muted-foreground">
             {isRegister ? (
               <>Already have an account?{" "}<button onClick={() => setIsRegister(false)} className="text-primary hover:underline">Sign in</button></>
