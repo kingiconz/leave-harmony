@@ -722,6 +722,43 @@ export default function AdminDashboard() {
                     </CardContent>
                   </Card>
 
+                  {/* Admin Activity */}
+                  <Card className="animate-fade-in">
+                    <CardHeader>
+                      <CardTitle className="font-display text-lg text-primary font-montserrat flex items-center gap-2">
+                        <Users className="h-5 w-5" /> Admin Activity
+                      </CardTitle>
+                      <p className="text-sm text-muted-foreground">
+                        Decisions by admin
+                        {selectedMonth !== "all" && ` — ${MONTH_NAMES[parseInt(selectedMonth)]} ${selectedYear}`}
+                      </p>
+                    </CardHeader>
+                    <CardContent>
+                      {adminActivityData.length > 0 ? (
+                        <Table className="text-xs">
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Admin</TableHead>
+                              <TableHead>Approved</TableHead>
+                              <TableHead>Rejected</TableHead>
+                              <TableHead>Total</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {adminActivityData.map((a) => (
+                              <TableRow key={a.name}>
+                                <TableCell className="font-medium">{a.name}</TableCell>
+                                <TableCell className="text-success">{a.approved}</TableCell>
+                                <TableCell className="text-destructive">{a.rejected}</TableCell>
+                                <TableCell>{a.total}</TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      ) : (
+                        <p className="py-8 text-center text-muted-foreground">No admin decisions for this period.</p>
+                      )}
+                    </CardContent>
                   {/* Department breakdown */}
                   <Card className="animate-fade-in">
                     <CardHeader>
@@ -984,6 +1021,43 @@ export default function AdminDashboard() {
                   </CardContent>
                 </Card>
 
+                {/* Admin Activity */}
+                <Card className="animate-fade-in">
+                  <CardHeader>
+                    <CardTitle className="font-display text-lg text-primary font-montserrat flex items-center gap-2">
+                      <Users className="h-5 w-5" /> Admin Activity
+                    </CardTitle>
+                    <p className="text-sm text-muted-foreground">
+                      Decisions by admin
+                      {selectedMonth !== "all" && ` — ${MONTH_NAMES[parseInt(selectedMonth)]} ${selectedYear}`}
+                    </p>
+                  </CardHeader>
+                  <CardContent>
+                    {adminActivityData.length > 0 ? (
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Admin</TableHead>
+                            <TableHead>Approved</TableHead>
+                            <TableHead>Rejected</TableHead>
+                            <TableHead>Total</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {adminActivityData.map((a) => (
+                            <TableRow key={a.name}>
+                              <TableCell className="font-medium">{a.name}</TableCell>
+                              <TableCell className="text-success">{a.approved}</TableCell>
+                              <TableCell className="text-destructive">{a.rejected}</TableCell>
+                              <TableCell>{a.total}</TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    ) : (
+                      <p className="py-8 text-center text-muted-foreground">No admin decisions for this period.</p>
+                    )}
+                  </CardContent>
                 {/* Department breakdown */}
                 <Card className="animate-fade-in">
                   <CardHeader>
