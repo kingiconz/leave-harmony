@@ -295,6 +295,7 @@ export default function AdminDashboard() {
   }, [requests, selectedYear, selectedMonth]);
 
 
+  const chartData = analyticsView === "weekly" ? weeklyData : (dailyData || monthlyData);
   const xKey = analyticsView === "weekly" ? "week" : (dailyData ? "day" : "month");
   const chartTitle = analyticsView === "weekly"
     ? `${selectedYear} — Weekly Overview`
