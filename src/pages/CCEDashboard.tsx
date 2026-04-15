@@ -19,6 +19,23 @@ export default function CCEDashboard() {
   const queryClient = useQueryClient();
   const [comments, setComments] = useState<Record<string, string>>({});
 
+  // Fetch current CCE's profile name
+  const { data: cceProfile } = useQuery({
+    queryKey: ["cce-profile", user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("name")
+        .eq("user_id", user!.id)
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user,
+  });
+
+  const cceName = cceProfile?.name || "CCE";
+
   // Fetch all leave requests made by department leaders
   const { data: leaderRequests, isLoading } = useQuery({
     queryKey: ["cce-leader-leaves"],
@@ -54,7 +71,7 @@ export default function CCEDashboard() {
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, cce_status, cce_comment }: { id: string; cce_status: string; cce_comment?: string }) => {
-      const updateData: Record<string, string> = { cce_status, leader_request_decided_by: "CCE" };
+      const updateData: Record<string, string> = { cce_status, leader_request_decided_by: cceName };
       if (cce_comment !== undefined) updateData.cce_comment = cce_comment;
       const { error } = await supabase
         .from("leave_requests")

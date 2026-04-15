@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { useAuth } from "@/context/AuthContext";
 import Navbar from "@/components/Navbar";
 import StatusBadge from "@/components/StatusBadge";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
@@ -19,12 +20,30 @@ const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Se
 type AnalyticsView = "yearly" | "weekly" | "monthly";
 
 export default function AdminDashboard() {
+  const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const currentYear = new Date().getFullYear();
   const [selectedYear, setSelectedYear] = useState(String(currentYear));
   const [selectedMonth, setSelectedMonth] = useState("all");
   const [analyticsView, setAnalyticsView] = useState<AnalyticsView>("yearly");
+
+  // Fetch current admin's profile name
+  const { data: adminProfile } = useQuery({
+    queryKey: ["admin-profile", user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("name")
+        .eq("user_id", user!.id)
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user,
+  });
+
+  const adminName = adminProfile?.name || "Admin";
 
   // Fetch leader user IDs
   const { data: leaderUserIds } = useQuery({
@@ -67,7 +86,7 @@ export default function AdminDashboard() {
       const updateData: Record<string, string> = { status };
       if (admin_comment !== undefined) updateData.admin_comment = admin_comment;
       if (status === "Approved" || status === "Rejected") {
-        updateData.staff_request_decided_by = "Admin";
+        updateData.staff_request_decided_by = adminName;
       }
       const { error } = await supabase
         .from("leave_requests")
@@ -87,7 +106,7 @@ export default function AdminDashboard() {
   // Mutation for admin to approve/reject leader leave requests
   const leaderUpdateMutation = useMutation({
     mutationFn: async ({ id, cce_status, admin_comment }: { id: string; cce_status: string; admin_comment?: string }) => {
-      const updateData: Record<string, string> = { cce_status, leader_request_decided_by: "Admin" };
+      const updateData: Record<string, string> = { cce_status, leader_request_decided_by: adminName };
       if (admin_comment !== undefined) updateData.admin_comment = admin_comment;
       const { error } = await supabase
         .from("leave_requests")
@@ -240,6 +259,40 @@ export default function AdminDashboard() {
       total: weeks[i + 1].approved + weeks[i + 1].pending + weeks[i + 1].rejected,
     }));
   }, [requests, selectedYear]);
+
+  // Admin activity breakdown - who approved/rejected what
+  const adminActivityData = useMemo(() => {
+    if (!requests) return [];
+    const year = parseInt(selectedYear);
+    let filtered = requests.filter((r) => new Date(r.start_date).getFullYear() === year);
+    if (selectedMonth !== "all") {
+      const month = parseInt(selectedMonth);
+      filtered = filtered.filter((r) => new Date(r.start_date).getMonth() === month);
+    }
+    // Count decisions by admin name from both staff and leader requests
+    const admins: Record<string, { approved: number; rejected: number }> = {};
+    filtered.forEach((r) => {
+      // Staff requests decided by admin
+      const staffDecider = (r as any).staff_request_decided_by;
+      if (staffDecider && staffDecider !== "") {
+        if (!admins[staffDecider]) admins[staffDecider] = { approved: 0, rejected: 0 };
+        if (r.status === "Approved") admins[staffDecider].approved++;
+        else if (r.status === "Rejected") admins[staffDecider].rejected++;
+      }
+      // Leader requests decided by admin/cce
+      const leaderDecider = (r as any).leader_request_decided_by;
+      if (leaderDecider && leaderDecider !== "") {
+        if (!admins[leaderDecider]) admins[leaderDecider] = { approved: 0, rejected: 0 };
+        if (r.cce_status === "Approved") admins[leaderDecider].approved++;
+        else if (r.cce_status === "Rejected") admins[leaderDecider].rejected++;
+      }
+    });
+    return Object.entries(admins).map(([name, counts]) => ({
+      name,
+      ...counts,
+      total: counts.approved + counts.rejected,
+    })).sort((a, b) => b.total - a.total);
+  }, [requests, selectedYear, selectedMonth]);
 
 
   const chartData = analyticsView === "weekly" ? weeklyData : (dailyData || monthlyData);
@@ -669,6 +722,45 @@ export default function AdminDashboard() {
                     </CardContent>
                   </Card>
 
+                  {/* Admin Activity */}
+                  <Card className="animate-fade-in">
+                    <CardHeader>
+                      <CardTitle className="font-display text-lg text-primary font-montserrat flex items-center gap-2">
+                        <Users className="h-5 w-5" /> Admin Activity
+                      </CardTitle>
+                      <p className="text-sm text-muted-foreground">
+                        Decisions by admin
+                        {selectedMonth !== "all" && ` — ${MONTH_NAMES[parseInt(selectedMonth)]} ${selectedYear}`}
+                      </p>
+                    </CardHeader>
+                    <CardContent>
+                      {adminActivityData.length > 0 ? (
+                        <Table className="text-xs">
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Admin</TableHead>
+                              <TableHead>Approved</TableHead>
+                              <TableHead>Rejected</TableHead>
+                              <TableHead>Total</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {adminActivityData.map((a) => (
+                              <TableRow key={a.name}>
+                                <TableCell className="font-medium">{a.name}</TableCell>
+                                <TableCell className="text-success">{a.approved}</TableCell>
+                                <TableCell className="text-destructive">{a.rejected}</TableCell>
+                                <TableCell>{a.total}</TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      ) : (
+                        <p className="py-8 text-center text-muted-foreground">No admin decisions for this period.</p>
+                      )}
+                    </CardContent>
+                  </Card>
+
                   {/* Department breakdown */}
                   <Card className="animate-fade-in">
                     <CardHeader>
@@ -928,6 +1020,45 @@ export default function AdminDashboard() {
                         </AreaChart>
                       </ResponsiveContainer>
                     </div>
+                  </CardContent>
+                </Card>
+
+                {/* Admin Activity */}
+                <Card className="animate-fade-in">
+                  <CardHeader>
+                    <CardTitle className="font-display text-lg text-primary font-montserrat flex items-center gap-2">
+                      <Users className="h-5 w-5" /> Admin Activity
+                    </CardTitle>
+                    <p className="text-sm text-muted-foreground">
+                      Decisions by admin
+                      {selectedMonth !== "all" && ` — ${MONTH_NAMES[parseInt(selectedMonth)]} ${selectedYear}`}
+                    </p>
+                  </CardHeader>
+                  <CardContent>
+                    {adminActivityData.length > 0 ? (
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Admin</TableHead>
+                            <TableHead>Approved</TableHead>
+                            <TableHead>Rejected</TableHead>
+                            <TableHead>Total</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {adminActivityData.map((a) => (
+                            <TableRow key={a.name}>
+                              <TableCell className="font-medium">{a.name}</TableCell>
+                              <TableCell className="text-success">{a.approved}</TableCell>
+                              <TableCell className="text-destructive">{a.rejected}</TableCell>
+                              <TableCell>{a.total}</TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    ) : (
+                      <p className="py-8 text-center text-muted-foreground">No admin decisions for this period.</p>
+                    )}
                   </CardContent>
                 </Card>
 
