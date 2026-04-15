@@ -260,8 +260,41 @@ export default function AdminDashboard() {
     }));
   }, [requests, selectedYear]);
 
+  // Admin activity breakdown - who approved/rejected what
+  const adminActivityData = useMemo(() => {
+    if (!requests) return [];
+    const year = parseInt(selectedYear);
+    let filtered = requests.filter((r) => new Date(r.start_date).getFullYear() === year);
+    if (selectedMonth !== "all") {
+      const month = parseInt(selectedMonth);
+      filtered = filtered.filter((r) => new Date(r.start_date).getMonth() === month);
+    }
+    // Count decisions by admin name from both staff and leader requests
+    const admins: Record<string, { approved: number; rejected: number }> = {};
+    filtered.forEach((r) => {
+      // Staff requests decided by admin
+      const staffDecider = (r as any).staff_request_decided_by;
+      if (staffDecider && staffDecider !== "") {
+        if (!admins[staffDecider]) admins[staffDecider] = { approved: 0, rejected: 0 };
+        if (r.status === "Approved") admins[staffDecider].approved++;
+        else if (r.status === "Rejected") admins[staffDecider].rejected++;
+      }
+      // Leader requests decided by admin/cce
+      const leaderDecider = (r as any).leader_request_decided_by;
+      if (leaderDecider && leaderDecider !== "") {
+        if (!admins[leaderDecider]) admins[leaderDecider] = { approved: 0, rejected: 0 };
+        if (r.cce_status === "Approved") admins[leaderDecider].approved++;
+        else if (r.cce_status === "Rejected") admins[leaderDecider].rejected++;
+      }
+    });
+    return Object.entries(admins).map(([name, counts]) => ({
+      name,
+      ...counts,
+      total: counts.approved + counts.rejected,
+    })).sort((a, b) => b.total - a.total);
+  }, [requests, selectedYear, selectedMonth]);
 
-  const chartData = analyticsView === "weekly" ? weeklyData : (dailyData || monthlyData);
+
   const xKey = analyticsView === "weekly" ? "week" : (dailyData ? "day" : "month");
   const chartTitle = analyticsView === "weekly"
     ? `${selectedYear} — Weekly Overview`
