@@ -1060,6 +1060,8 @@ export default function AdminDashboard() {
                       <p className="py-8 text-center text-muted-foreground">No admin decisions for this period.</p>
                     )}
                   </CardContent>
+                </Card>
+
                 {/* Department breakdown */}
                 <Card className="animate-fade-in">
                   <CardHeader>
