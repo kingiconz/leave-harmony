@@ -86,7 +86,7 @@ export default function AdminDashboard() {
       const updateData: Record<string, string> = { status };
       if (admin_comment !== undefined) updateData.admin_comment = admin_comment;
       if (status === "Approved" || status === "Rejected") {
-        updateData.staff_request_decided_by = "Admin";
+        updateData.staff_request_decided_by = adminName;
       }
       const { error } = await supabase
         .from("leave_requests")
@@ -106,7 +106,7 @@ export default function AdminDashboard() {
   // Mutation for admin to approve/reject leader leave requests
   const leaderUpdateMutation = useMutation({
     mutationFn: async ({ id, cce_status, admin_comment }: { id: string; cce_status: string; admin_comment?: string }) => {
-      const updateData: Record<string, string> = { cce_status, leader_request_decided_by: "Admin" };
+      const updateData: Record<string, string> = { cce_status, leader_request_decided_by: adminName };
       if (admin_comment !== undefined) updateData.admin_comment = admin_comment;
       const { error } = await supabase
         .from("leave_requests")
